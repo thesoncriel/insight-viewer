@@ -1,0 +1,273 @@
+unit Event_SchOpt_SchOptPartUnit;
+
+interface
+
+uses
+  FMX.Controls, Classes, FMX.Types, iniFiles, SearchOption_Intf, DCL_intf,
+  FMX.ListBox;
+
+const
+  EXPANDER_CHILD_PANEL_HEIGHT = 35;
+  EXPANDER_MARGIN = 5;
+  EXPANDER_CHILD_LABEL_WIDTH = 100;
+  EXPANDER_CHILD_ITEM_WIDTH = 120;
+  EXPANDER_CHILD_LABEL_FONT_SIZE = 15;
+
+type
+  TEvent_AbsSearchOptionPart = class(TObject)
+    private
+      FExpander: TExpander;
+      FDataHash: IStrMap;
+      function GetItemValue(key: String): String;
+      procedure SetItemValue(key, val: String);
+    protected
+      function GetChildPanel: TPanel;
+      function GetChildLabel(labelText: String): TLabel;
+    public
+      constructor Create(owner: TExpander); virtual;
+      destructor Destroy; override;
+      function IsUse: Boolean;
+      procedure AddItem_ComboBox(labelText, keyName: string);
+      procedure AddItem_CheckBox(labelText, keyName: string);
+      procedure AddListBox(strList: TStringList);
+      property ItemValue[key: String]: String read GetItemValue write SetItemValue;
+
+      function GetSearchOptionPart: ISearchOptionPart; virtual; abstract;
+  end;
+
+  TEvent_SearchOptionPart = class(TEvent_AbsSearchOptionPart)
+    public
+      function GetSearchOptionPart: ISearchOptionPart;
+  end;
+
+  TEvent_ColumnListPart = class(TEvent_AbsSearchOptionPart)
+    private
+      FListBox: TListBox;
+    protected
+      procedure BtnAllSelect_OnClick(sender: TObject);
+      procedure BtnDeSelect_OnClick(sender: TObject);
+      procedure SetCheckAllItems(val: Boolean);
+      function GetButton(owner: TFmxObject): TButton;
+    public
+      constructor Create(owner: TExpander); override;
+      destructor Destroy; override;
+      function GetSearchOptionPart: ISearchOptionPart;
+  end;
+
+implementation
+
+uses
+  HashMap, SysUtils, StrOptComponent, HashedOptionPart, ColumnListOptionPart;
+
+{ TEvent_SearchOptionPart }
+
+procedure TEvent_AbsSearchOptionPart.AddItem_CheckBox(labelText, keyName: string);
+var
+  chkBtn: TStrOptCheckButton;
+  panel: TPanel;
+  lab: TLabel;
+begin
+  panel := GetChildPanel;
+  chkBtn := TStrOptCheckButton.Create( panel );
+
+  lab := GetChildLabel( labelText );
+  lab.Parent := panel;
+
+  FExpander.Height := FExpander.Height + EXPANDER_CHILD_PANEL_HEIGHT;
+
+  FDataHash.PutValue( keyName, chkBtn );
+end;
+
+procedure TEvent_AbsSearchOptionPart.AddItem_ComboBox(labelText, keyName: string);
+var
+  cmbBox: TStrOptComboBox;
+  panel: TPanel;
+  lab: TLabel;
+begin
+  panel := GetChildPanel;
+  cmbBox := TStrOptComboBox.Create( panel );
+
+  lab := GetChildLabel( labelText );
+  lab.Parent := panel;
+
+  FExpander.Height := FExpander.Height + EXPANDER_CHILD_PANEL_HEIGHT;
+
+  FDataHash.PutValue( keyName, cmbBox );
+end;
+
+
+
+procedure TEvent_AbsSearchOptionPart.AddListBox(strList: TStringList);
+var
+  listBox: TListBox;
+begin
+  listBox := TListBox.Create( FExpander );
+  listBox.Parent := FExpander;
+
+end;
+
+constructor TEvent_AbsSearchOptionPart.Create(owner: TExpander);
+begin
+  FExpander := owner;
+  FDataHash := TStrHashMap.Create;
+end;
+
+destructor TEvent_AbsSearchOptionPart.Destroy;
+begin
+  FDataHash.Clear;
+  inherited;
+end;
+
+function TEvent_AbsSearchOptionPart.GetChildLabel(labelText: String): TLabel;
+var
+  lab: TLabel;
+begin
+  lab := TLabel.Create( nil );
+  lab.Text := labelText;
+  lab.Width := EXPANDER_CHILD_LABEL_WIDTH;
+  lab.Align := TAlignLayout.alLeft;
+  lab.Font.Size := EXPANDER_CHILD_LABEL_FONT_SIZE;
+end;
+
+function TEvent_AbsSearchOptionPart.GetChildPanel: TPanel;
+var
+  panel: TPanel;
+begin
+  panel := TPanel.Create( FExpander );
+  panel.Parent := FExpander;
+  panel.Align := TAlignLayout.alTop;
+  panel.Height := EXPANDER_CHILD_PANEL_HEIGHT;
+  panel.Margins.Top := EXPANDER_MARGIN;
+  panel.Margins.Left := EXPANDER_MARGIN;
+  result := panel;
+end;
+
+function TEvent_AbsSearchOptionPart.GetItemValue(key: String): String;
+var
+  intfComp: IStrOptionComponent;
+begin
+  if Supports( FDataHash.GetValue( key ), IStrOptionComponent, intfComp ) = true  then
+  result := intfComp.GetValue;
+end;
+
+function TEvent_AbsSearchOptionPart.IsUse: Boolean;
+begin
+  result := ( FExpander.ShowCheck = false ) or
+            ( ( FExpander.ShowCheck = true ) and ( FExpander.IsChecked = true ) );
+end;
+
+procedure TEvent_AbsSearchOptionPart.SetItemValue(key, val: String);
+var
+  intfComp: IStrOptionComponent;
+begin
+  if Supports( FDataHash.GetValue( key ), IStrOptionComponent, intfComp ) = true  then
+  intfComp.SetValue( val );
+end;
+
+{ TEvent_SearchOptionPart }
+
+function TEvent_SearchOptionPart.GetSearchOptionPart: ISearchOptionPart;
+var
+  optPart: THashedOptionPart;
+  strIter: IStrIterator;
+begin
+  optPart := THashedOptionPart.Create;
+  optPart.SetUse( IsUse );
+  strIter := FDataHash.KeySet.First;
+
+  while strIter.HasNext = true do
+  begin
+    optPart.Items[ strIter.GetString ] := GetItemValue( strIter.GetString );
+  end;
+
+  result := optPart;
+end;
+
+{ TEvent_ColumnListPart }
+
+procedure TEvent_ColumnListPart.BtnAllSelect_OnClick(sender: TObject);
+begin
+  SetCheckAllItems( true );
+end;
+
+procedure TEvent_ColumnListPart.BtnDeSelect_OnClick(sender: TObject);
+begin
+  SetCheckAllItems( false );
+end;
+
+constructor TEvent_ColumnListPart.Create(owner: TExpander);
+var
+  panel: TPanel;
+  btnAllSel: TButton;
+  btnDeSel : TButton;
+begin
+  inherited;
+  FListBox := TListBox.Create( FExpander );
+  FListBox.Align := TAlignLayout.alTop;
+  FListBox.Parent := FExpander;
+  FListBox.ShowCheckboxes := true;
+
+  panel := GetChildPanel;
+
+  btnAllSel := Getbutton( panel );
+  btnAllSel.Text := 'All Select';
+  btnAllSel.OnClick := BtnAllSelect_OnClick;
+
+  btnDeSel := GetButton( panel );
+  btnDeSel.Text := 'Deselect';
+  btnDeSel.OnClick := BtnDeSelect_OnClick;
+
+  SetCheckAllItems( true );
+end;
+
+destructor TEvent_ColumnListPart.Destroy;
+begin
+  FExpander.DestroyComponents;
+  inherited;
+end;
+
+function TEvent_ColumnListPart.GetButton(owner: TFmxObject): TButton;
+var
+  btn: TButton;
+begin
+  btn := TButton.Create( owner );
+  btn.Width := EXPANDER_CHILD_ITEM_WIDTH;
+  btn.Align := TAlignLayout.alLeft;
+  btn.Parent := owner;
+
+  result := btn;
+end;
+
+function TEvent_ColumnListPart.GetSearchOptionPart: ISearchOptionPart;
+var
+  optPart: TColumnListOptionPart;
+  sList: TStringList;
+  i: Integer;
+begin
+  optPart := TColumnListOptionPart.Create;
+  sList := TStringList.Create;
+
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    if FListBox.ItemByIndex( i ).IsChecked = true then
+      sList.Add( FListBox.ItemByIndex( i ).Text );
+  end;
+
+  optPart.SetUse( IsUse );
+  optPart.SetColumnList( sList );
+
+  result := optPart;
+end;
+
+procedure TEvent_ColumnListPart.SetCheckAllItems(val: Boolean);
+var
+  btn: TButton;
+  i: Integer;
+begin
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    FListBox.ItemByIndex( i ).IsChecked := val;
+  end;
+end;
+
+end.

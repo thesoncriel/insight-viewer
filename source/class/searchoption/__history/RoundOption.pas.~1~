@@ -1,0 +1,18 @@
+unit RoundOption;
+
+interface
+
+uses
+  SearchOptionPart, SearchOption, SysUtils;
+
+type
+  TRoundOption = class(TAbsSearchOptionPart)
+    public
+      constructor Create(searchOpt: TSearchOption);
+      function GetQueryPart: String;
+      function IsUse: Boolean;
+  end;
+
+implementation
+
+end.

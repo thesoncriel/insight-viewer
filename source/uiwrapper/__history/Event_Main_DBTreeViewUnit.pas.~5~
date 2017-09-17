@@ -1,0 +1,59 @@
+﻿unit Event_Main_DBTreeViewUnit;
+
+interface
+
+uses
+  FMX.TreeView, SearchOptionManager, DBManager;
+
+type
+  TEvent_DBTreeView = class(TObject)
+    private
+      FDBManager: TAbsDBManager;
+      FSearchOption: TSearchOptionManager;
+      FDBTreeView: TTreeView;
+
+    protected
+      procedure TreeView_OnDblClick(Sender: TObject);
+    public
+      constructor Create(treeView: TTreeView);
+      procedure AddDBFile(filePath: String);
+  end;
+
+implementation
+
+uses
+  Form_MainUnit, System.SysUtils;
+
+procedure MenuItem2Click(Sender: TObject);
+var
+  item: TTreeViewItem;
+begin
+  item := TTreeViewItem.Create( nil );
+  item.Text := 'haha';
+  //TreeView_DBList.Insert
+  Form_Main.TreeView_DBList.AddObject( item );
+end;
+
+{ TEvent_DBTreeView }
+
+procedure TEvent_DBTreeView.AddDBFile(filePath: String);
+var
+  sRestoreName: string;
+begin
+  sRestoreName := ExtractFileName( filePath );
+  FDBManager.Restore( filePath, sRestoreName );
+
+end;
+
+constructor TEvent_DBTreeView.Create(treeView: TTreeView);
+begin
+  FDBTreeView := treeView;
+  FDBTreeView.OnDblClick := TreeView_OnDblClick;
+end;
+
+procedure TEvent_DBTreeView.TreeView_OnDblClick(Sender: TObject);
+begin
+
+end;
+
+end.

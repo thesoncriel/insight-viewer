@@ -1,0 +1,145 @@
+unit Event_SchOptPart_ColumnUnit;
+
+interface
+
+uses
+  Event_SchOptPartUnit, FMX.ListBox, FMX.Controls, FMX.Types,
+  SearchOption_Intf, Classes;
+
+type
+  TEvent_SchOpt_Column = class(TEvent_AbsSearchOptionPart)
+    private
+      FListBox: TListBox;
+      FBtnAllSelect: TButton;
+      FBtnClear: TButton;
+      FDatetimeColumn: String;
+    protected
+      procedure BtnAllSelect_OnClick(Sender: TObject);
+      procedure BtnClear_OnClick(Sender: TObject);
+      procedure SetCheckAllItems(val: Boolean);
+      function DistinctDatetime(cols: TStringList): TStringList;
+      function StringComp(str1, str2: String): Boolean;
+    public
+      constructor Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+      destructor Destroy; override;
+      procedure SetColumnList(colList: TStringList);
+      function GetSearchOptionPart: ISearchOptionPart;
+  end;
+
+implementation
+
+uses
+  ColumnListOptionPart, SysUtils;
+
+{ TEvent_ColumnListPart }
+
+procedure TEvent_SchOpt_Column.BtnAllSelect_OnClick(Sender: TObject);
+begin
+  SetCheckAllItems( true );
+end;
+
+procedure TEvent_SchOpt_Column.BtnClear_OnClick(Sender: TObject);
+begin
+  SetCheckAllItems( false );
+end;
+
+constructor TEvent_SchOpt_Column.Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+begin
+  Init( owner );
+  FListBox :=  listBox;
+  FBtnAllSelect := btnAllSel;
+  FBtnClear := btnClear;
+
+  FBtnAllSelect.OnClick := BtnAllSelect_OnClick;
+  FBtnClear.OnClick := BtnClear_OnClick;
+
+  //FListBox.Items.Clear;
+end;
+
+destructor TEvent_SchOpt_Column.Destroy;
+begin
+  FExpander.DestroyComponents;
+  inherited;
+end;
+
+function TEvent_SchOpt_Column.GetSearchOptionPart: ISearchOptionPart;
+var
+  optPart: TColumnListOptionPart;
+  sList: TStringList;
+  i: Integer;
+begin
+  optPart := TColumnListOptionPart.Create;
+  sList := TStringList.Create;
+
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    if FListBox.ItemByIndex( i ).IsChecked = true then
+      sList.Add( FListBox.ItemByIndex( i ).Text );
+  end;
+
+  optPart.SetUse( IsUse );
+  optPart.SetDatetimeColumn( FDatetimeColumn );
+  optPart.SetColumnList( sList );
+
+  result := optPart;
+end;
+
+procedure TEvent_SchOpt_Column.SetCheckAllItems(val: Boolean);
+var
+  btn: TButton;
+  i: Integer;
+begin
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    FListBox.ItemByIndex( i ).IsChecked := val;
+  end;
+end;
+
+procedure TEvent_SchOpt_Column.SetColumnList(colList: TStringList);
+begin
+  FListBox.Items := DistinctDateTime( colList );
+  SetCheckAllItems( true );
+end;
+
+function TEvent_SchOpt_Column.StringComp(str1, str2: String): Boolean;
+var
+  pWideChar1, pWideChar2: PWideChar;
+begin
+  pWideChar1 := @str1;
+  pWideChar1 := @str2;
+
+
+  result := StrComp( pWideChar1, pWideChar2 ) > 0;
+end;
+
+function TEvent_SchOpt_Column.DistinctDatetime(cols: TStringList): TStringList;
+var
+  i, j: Integer;
+  isMatch: Boolean;
+  sList: TStringList;
+begin
+  isMatch := false;
+  sList := TStringList.Create;
+  FDatetimeColumn := '';
+
+  for i := 0 to cols.Count - 1 do
+  begin
+    for j := 0 to High( DATETIME_COLUMN_PATTERN ) do
+    begin
+      if ( StringComp( LowerCase( cols[ i ] ), DATETIME_COLUMN_PATTERN[ j ] ) = true ) then
+      begin
+        isMatch := true;
+      end
+      else isMatch := isMatch or false;
+    end;
+
+    if ( FDatetimeColumn = '' ) and ( isMatch = true ) then
+      FDatetimeColumn := cols[ i ]
+    else if isMatch = false then
+      sList.Add( cols[ i ] );
+  end;
+
+  result := sList;
+end;
+
+end.

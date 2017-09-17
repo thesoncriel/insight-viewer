@@ -1,0 +1,26 @@
+unit UIWrapper_Main_DBListUnit;
+
+interface
+
+uses
+  FMX.TabControl, FMX.TreeView;
+
+type
+  TUIWrapper_Main_DBList = class(TObject)
+    private
+      FTabControl: TTabControl;
+      FTreeViews: array of TTreeView;
+    public
+      constructor Cretae(tabCtrl: TTabControl; treeViews: array of TTreeView);
+  end;
+
+implementation
+
+{ TUIWrapper_Main_DBList }
+
+constructor TUIWrapper_Main_DBList.Cretae(tabCtrl: TTabControl; treeViews: array of TTreeView);
+begin
+
+end;
+
+end.

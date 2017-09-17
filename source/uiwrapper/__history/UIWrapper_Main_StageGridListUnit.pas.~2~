@@ -1,0 +1,52 @@
+unit UIWrapper_Main_StageGridListUnit;
+
+interface
+
+uses
+  FMX.TabControl;
+
+const
+  DBMS_NAME: array[0..1] of String = ( 'MS-SQL', 'Fire Bird' );
+
+type
+  TEvent_TabControl_DBList = class(TObject)
+    private
+      FTabCtrl: TTabControl;
+    protected
+      procedure InitChildTab(arrNames: array of String);
+    public
+      constructor Create(tabCtrl: TTabControl);
+  end;
+implementation
+
+uses
+  FMX.TreeView, FMX.Types;
+
+{ TEvent_TabControl_DBList }
+
+constructor TEvent_TabControl_DBList.Create(tabCtrl: TTabControl);
+begin
+  FTabCtrl := tabCtrl;            //tabCtrl.Tab
+  InitChildTab( DBMS_NAME );
+end;
+
+procedure TEvent_TabControl_DBList.InitChildTab(arrNames: array of String);
+var
+  i: Integer;
+  tabItem: TTabItem;
+  treeView: TTreeView;
+begin
+  for i := 0 to High( arrNames ) do
+  begin
+    tabItem := TTabItem.Create( FTabCtrl );
+    tabItem.Text := arrNames[ i ];
+    FTabCtrl.AddObject( tabItem );
+
+    treeView := TTreeView.Create( tabItem );
+    tabItem.AddObject( treeView );
+    treeView.Align := TAlignLayout.alClient;
+    treeView.AlternatingRowBackground := true;
+  end;
+end;
+
+end.

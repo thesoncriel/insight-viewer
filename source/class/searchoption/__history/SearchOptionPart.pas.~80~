@@ -1,0 +1,113 @@
+unit SearchOptionPart;
+
+interface
+
+uses
+  Classes, DCL_intf, SearchOption_Intf;
+
+type
+  TSearchOptionPart = class(TInterfacedObject, ISearchOptionPart)
+    protected
+      FHashMap: IStrMap;
+      FUse: Boolean;
+      function InsertPartToQueryByBoolean(tagQuery: String; val: Boolean; currIndex: Integer): String;
+    public
+      constructor Create; virtual;
+      destructor Destroy; override;
+      function GetValues(key: String): String; virtual;
+      procedure SetValues(key, val: String); virtual;
+      property Items[key: String]: String read GetValues write SetValues;
+
+      function InsertPartToQuery(tagQuery, key: String; currIndex: Integer): String; virtual;
+      function IsUse: Boolean; virtual;
+      procedure SetUse(val: Boolean); virtual;
+  end;
+
+  TListOptionPart = class(TSearchOptionPart)
+    public
+      function InsertPartToQuery(tagQuery, key: String; currIndex): String; virtual; override;
+  end;
+
+
+implementation
+
+uses
+  HashMap, System.SysUtils;
+
+{ TAbsSearchOptionPart }
+
+constructor TSearchOptionPart.Create;
+begin
+  FHashMap := TStrHashMap.Create;
+  FUse := false;
+end;
+
+destructor TSearchOptionPart.Destroy;
+begin
+  FHashMap.Clear;
+  FHashMap._Release;
+  inherited;
+end;
+
+function TSearchOptionPart.GetValues(key: String): String;
+begin
+  result := GetValues( key );
+end;
+
+function TSearchOptionPart.InsertPartToQuery(tagQuery, key: String;
+  currIndex: Integer): String;
+var
+  sTemp: String;
+  sVal: String;
+begin
+  sVal := Items[ key ];
+
+  if (sVal = 'true') or (sVal = 'false') then
+    sTemp := MiInsertPartToQueryByBooleantagQuery, StrToBool( sVal), currIndex )
+  else
+    sTemp := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + '}', Items[ key ], [ rfReplaceAll, rfIgnoreCase ] );
+
+  result := sTemp;
+end;
+
+function TSearchOptionPart.IsUse: Boolean;
+begin
+  result := FUse;
+end;
+
+function TSearchOptionPart.MiInsertPartToQueryByBooleanagQuery: String; val: Boolean;
+  currIndex: Integer): String;
+var
+  sRightBracket1: String;
+  sRightBracket2: String;
+begin
+  if val = true then
+  begin
+    sRightBracket1 := 't}';
+    sRightBracket2 := 'f}';
+  end
+  else
+  begin
+    sRightBracket1 := 'f}';
+    sRightBracket2 := 't}';
+  end;
+
+  tagQuery := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + sRightBracket1, '', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{/' + IntToStr( currIndex ) + sRightBracket1, '', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + sRightBracket2, '/*', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{/' + IntToStr( currIndex ) + sRightBracket2, '*/', [ rfReplaceAll, rfIgnoreCase ] );
+
+  result := tagQuery;
+end;
+
+procedure TSearchOptionPart.SetValues(key: String; val: String);
+begin
+  FHashMap.PutValue( key, TObject( val ) );
+end;
+
+procedure TSearchOptionPart.SetUse(val: Boolean);
+begin
+  FUse := val;
+end;
+
+end.

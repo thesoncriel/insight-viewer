@@ -1,0 +1,106 @@
+unit Event_SchOpt_StageEditorUnit;
+
+interface
+
+uses
+  FMX.Layouts, FMX.Types, Frame_SchOpt_StageInfo;
+
+type
+  TEvent_SchOpt_StageEditor = class(TObject)
+    private
+      FScrollBox_StageList: TScrollBox;
+    protected
+      procedure StageRelocation(Sender: TObject);
+      procedure StageAdding(Sender: TObject);
+    public
+      constructor Create( stageList: TScrollBox );
+      procedure Add;
+      procedure Remove( stage: TFmxObject );
+      procedure Delete(index: Integer);
+      procedure DeleteLast;
+      function GetStage(index: Integer): TFrame_SchOpt_StageInfo;
+      //function GetStageOption
+  end;
+
+implementation
+
+uses
+  FMX.Edit;
+
+{ TEvent_SchOpt_StageEditor }
+
+procedure TEvent_SchOpt_StageEditor.Add;
+var
+  frameStage: TFrame_SchOpt_StageInfo;
+  iCount: Integer;
+begin
+  frameStage := TFrame_SchOpt_StageInfo.Create( FScrollBox_StageList );
+  iCount := FScrollBox_StageList.ComponentCount;
+
+  frameStage.Position.X := FRAME_STAGEINFO_PADDING;
+  frameStage.Position.Y := FRAME_STAGEINFO_PADDING + ( FRAME_STAGEINFO_HEIGHT * iCount );
+  frameStage.Opacity := 0.5;
+
+  frameStage.OnRemove := StageRelocation;
+  frameStage.OnInsertLogData := StageAdding;
+  FScrollBox_StageList.AddObject( frameStage );
+end;
+
+constructor TEvent_SchOpt_StageEditor.Create(stageList: TScrollBox);
+begin
+  FScrollBox_StageList := stageList;
+  Add;
+end;
+
+procedure TEvent_SchOpt_StageEditor.Delete(index: Integer);
+begin
+  FScrollBox_StageList.Components[ index ].Destroy;
+end;
+
+procedure TEvent_SchOpt_StageEditor.DeleteLast;
+begin
+  Delete( FScrollBox_StageList.ComponentCount - 1 );
+end;
+
+function TEvent_SchOpt_StageEditor.GetStage(
+  index: Integer): TFrame_SchOpt_StageInfo;
+begin
+  result := FScrollBox_StageList.Components[ index ] as TFrame_SchOpt_StageInfo;
+end;
+
+procedure TEvent_SchOpt_StageEditor.Remove(stage: TFmxObject);
+begin
+  FScrollBox_StageList.RemoveObject( stage );
+end;
+
+procedure TEvent_SchOpt_StageEditor.StageAdding(Sender: TObject);
+var
+  stage: TFrame_SchOpt_StageInfo;
+  iCount: Integer;
+  i: Integer;
+begin
+  stage := Sender as TFrame_SchOpt_StageInfo;
+  iCount := FScrollBox_StageList.ComponentCount;
+  for i := 0 to iCount - 1 do
+  begin
+    if FScrollBox_StageList.Components[ i ].Equals( Sender ) = true then
+    begin
+      if i = ( iCount - 1 ) then Add;
+    end;
+  end;
+end;
+
+procedure TEvent_SchOpt_StageEditor.StageRelocation(Sender: TObject);
+var
+  i: Integer;
+  frameStage: TFrame_SchOpt_StageInfo;
+begin
+  for i := 0 to FScrollBox_StageList.ComponentCount - 1 do
+  begin
+    frameStage := TFrame_SchOpt_StageInfo( FScrollBox_StageList.Components[ i ] );
+    frameStage.Position.X := FRAME_STAGEINFO_PADDING;
+    frameStage.Position.Y := ( FRAME_STAGEINFO_PADDING + FRAME_STAGEINFO_HEIGHT ) * i;
+  end;
+end;
+
+end.

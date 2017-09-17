@@ -1,0 +1,109 @@
+unit GroupOption;
+
+interface
+
+uses
+  SearchOptionPart, Classes, SearchOption;
+
+const
+  SOP_GROUP_TIMEUNIT: array of String = ( 'none', 'sec', 'min', 'hour' );
+  SOP_GROUP_SEVERAL_SEC: array of Integer = ( 10, 15, 20, 30 );
+  SOP_GROUP_SEVERAL_MIN: array of Integer = ( 1, 2, 3, 4, 5, 6, 10, 20, 30 );
+  SOP_GROUP_SEVERAL_HOUR: array of Integer = ( 1, 2, 3, 4, 5, 6 );
+
+type
+  TGroupOption = class(TAbsSearchOptionPart)
+    protected
+      function GetTimeUnit: String;
+      procedure SetTimeUnit(val: String);
+      function GetSeveral: String;
+      procedure SetSeveral(val: String);
+      function GetFunc: String;
+      procedure SetFunc(val: String);
+    public
+      constructor Create(searchOpt: TSearchOption); override;
+      destructor Destroy; override;
+      function GetQueryPart: String; override;
+      function IsUse: Boolean; override;
+
+      property TimeUnit: String read GetTimeUnit write SetTimeUnit;
+      property Several: String read GetSeveral write SetSeveral;
+      property Func: String read GetFunc write SetFunc;
+  end;
+implementation
+
+uses
+  SysUtils;
+
+{ TGroupOption }
+
+constructor TGroupOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  FHashMap.PutValue( 'timeunit', 'min' );
+  FHashMap.PutValue( 'several', '1' );
+  FHashMap.PutValue( 'func', 'avg' );
+end;
+
+destructor TGroupOption.Destroy;
+begin
+
+  inherited;
+end;
+
+function TGroupOption.GetFunc: String;
+begin
+  result := Items[ 'func' ];
+end;
+
+function TGroupOption.GetQueryPart: String;
+var
+  bSplit: Boolean;
+  sQueryPart: String;
+begin
+  if FIsUse = true then
+  begin
+    if FSearchOpt.Options[ 'datetime' ].IsUse = true then
+    begin
+      bSplit := StrToBool( FSearchOpt.Values[ 'datetime', 'split' ] );
+      if bSplit = true then
+        sQueryPart := ' [_Date], [_Time] '
+      else
+        sQueryPart := ' [_Datetime] ';
+    end;
+  end;
+
+  result := ' group by ' + sQueryPart;
+end;
+
+function TGroupOption.GetSeveral: String;
+begin
+  result := Items[ 'several' ];
+end;
+
+function TGroupOption.GetTimeUnit: String;
+begin
+  result := Items[ 'timeunit' ];
+end;
+
+function TGroupOption.IsUse: Boolean;
+begin
+  result := FIsUse;
+end;
+
+procedure TGroupOption.SetFunc(val: String);
+begin
+  Items[ 'func' ] := val;
+end;
+
+procedure TGroupOption.SetSeveral(val: String);
+begin
+  Items[ 'several' ] := val;
+end;
+
+procedure TGroupOption.SetTimeUnit(val: String);
+begin
+  Items[ 'timeunit' ] := val;
+end;
+
+end.

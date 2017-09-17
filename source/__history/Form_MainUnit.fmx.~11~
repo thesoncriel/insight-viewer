@@ -1,0 +1,134 @@
+object Form_Main: TForm_Main
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Form1'
+  ClientHeight = 400
+  ClientWidth = 600
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Button1: TButton
+    Position.Point = '(16,288)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button1Click
+    TabOrder = 0
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button1'
+  end
+  object Button2: TButton
+    Position.Point = '(200,352)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button2Click
+    TabOrder = 1
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button2'
+  end
+  object StringGrid1: TStringGrid
+    Position.Point = '(16,64)'
+    Width = 321.000000000000000000
+    Height = 209.000000000000000000
+    StyleLookup = 'gridstyle'
+    TabOrder = 2
+    AlternatingRowBackground = True
+    RowHeight = 21.000000000000000000
+    RowCount = 2
+    object TStringColumn
+      Width = 64.000000000000000000
+      Height = 186.000000000000000000
+      HitTest = False
+      TabOrder = 0
+      Header = 'ID'
+    end
+    object TStringColumn
+      Position.Point = '(64,0)'
+      Width = 64.000000000000000000
+      Height = 186.000000000000000000
+      HitTest = False
+      TabOrder = 1
+      Header = 'NAME'
+    end
+  end
+  object ListBox1: TListBox
+    Position.Point = '(448,8)'
+    Width = 148.000000000000000000
+    Height = 257.000000000000000000
+    TabOrder = 22
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = True
+    Left = 20
+    Top = 5
+    object BindGridLinkGrid11: TBindGridLink
+      Category = 'Links'
+      ColumnExpressions = <>
+      PosControlExpressions = <>
+      PosSourceExpressions = <>
+      FormatControlExpressions = <>
+      ClearControlExpressions = <>
+    end
+    object DBLinkStringGrid12: TBindDBGridLink
+      Category = 'DB Links'
+      DataSource = BindScopeDB1
+      GridControl = StringGrid1
+      Columns = <>
+    end
+  end
+  object SQLConnection1: TSQLConnection
+    ConnectionName = 'HAHAFB'
+    DriverName = 'FIREBIRD'
+    GetDriverFunc = 'getSQLDriverINTERBASE'
+    LibraryName = 'dbxfb.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'drivername=FIREBIRD'
+      'librarynameosx=libsqlfb.dylib'
+      'vendorlibwin64=fbclient.dll'
+      'vendorlibosx=/Library/Frameworks/Firebird.framework/Firebird'
+      'blobsize=-1'
+      'commitretain=False'
+      'Database=d:\gogo.fdb'
+      'localecode=0000'
+      'Password=masterkey'
+      'rolename=RoleName'
+      'sqldialect=1'
+      'isolationlevel=ReadCommitted'
+      'user_name=sysdba'
+      'waitonlocks=True'
+      'trim char=False')
+    TableScope = [tsSynonym, tsSysTable, tsTable, tsView]
+    VendorLib = 'fbclient.dll'
+    Left = 552
+    Top = 352
+  end
+  object BindScopeDB1: TBindScopeDB
+    DataSource = DataSource1
+    Left = 26
+    Top = 10
+  end
+  object DataSource1: TDataSource
+    DataSet = SimpleDataSet1
+    Left = 416
+    Top = 352
+  end
+  object SimpleDataSet1: TSimpleDataSet
+    Active = True
+    Aggregates = <>
+    Connection = SQLConnection1
+    DataSet.GetMetadata = True
+    DataSet.NumericMapping = True
+    DataSet.CommandText = 'select * from haha;'
+    DataSet.MaxBlobSize = -1
+    DataSet.ParamCheck = False
+    DataSet.Params = <>
+    Params = <>
+    Left = 488
+    Top = 352
+  end
+end

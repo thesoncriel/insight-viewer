@@ -1,0 +1,64 @@
+object Form_GraphView: TForm_GraphView
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Insight Viewer - Graph View'
+  ClientHeight = 400
+  ClientWidth = 754
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Chart_Graph: TChart
+    Align = alClient
+    Width = 754.000000000000000000
+    Height = 400.000000000000000000
+    Title.Text.Strings = (
+      'TChart')
+    View3D = False
+    Zoom.Brush.Kind = bkNone
+    TabOrder = 0
+    ColorPaletteIndex = 13
+    object Series2: TBarSeries
+      Marks.Arrow.Visible = True
+      Marks.Callout.Brush.Color = claBlack
+      Marks.Callout.Arrow.Visible = True
+      Marks.Visible = True
+      XValues.Name = 'X'
+      XValues.Order = loNone
+      YValues.Name = 'Bar'
+      YValues.Order = loNone
+    end
+    object Series1: TLineSeries
+      Marks.Arrow.Visible = True
+      Marks.Callout.Brush.Color = claBlack
+      Marks.Callout.Arrow.Visible = True
+      Marks.Visible = False
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.Visible = False
+      XValues.Name = 'X'
+      XValues.Order = loNone
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = {
+        001900000000000000004C8D400000000000908F400000000000A88B40000000
+        0000A88B400000000000988C400000000000348C400000000000DC8940000000
+        0000FC8C4000000000001C8B4000000000002C8A400000000000E88740000000
+        00008C84400000000000FC874000000000001885400000000000988740000000
+        0000548A400000000000B088400000000000E085400000000000848740000000
+        0000F48A400000000000DC894000000000003888400000000000EC8840000000
+        00005C87400000000000388840}
+    end
+  end
+  object DataSource_Graph: TDataSource
+    Left = 560
+    Top = 8
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = True
+    Left = 20
+    Top = 5
+  end
+end

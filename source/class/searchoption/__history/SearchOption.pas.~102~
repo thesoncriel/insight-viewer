@@ -1,0 +1,185 @@
+unit SearchOption;
+
+interface
+
+uses
+  DCL_intf, HashMap, SysUtils, SearchOption_Intf, StageOptionPart, Classes,
+  StageOptionPartList, DBManager;
+
+type
+  TSearchOption = class(TObject)
+    private
+      FOptHash: IStrMap;
+      //FSearchOptions: array of ISearchOptionPart;
+      FSearchOptionPointer: Integer;
+      FStageOptionList: TStageOptionList;
+      FTableNames: TStringList;
+      FDBManager: TAbsDBManager;
+    procedure SetSearchOptions(options: array of ISearchOptionPart);
+    protected
+      procedure Init; virtual;
+      function GetOption(key: String): ISearchOptionPart;
+
+    public
+      constructor Create;
+      destructor Destroy;
+      procedure SetStageOptionList(stageOptions: TStageOptionList);
+      procedure AddSearchOption(key: String; option: ISearchOptionPart);
+      function GetStageName(stageNum: Integer): String;
+      function GetStageNameList: TStringList;
+      function Count: Integer;
+      function GetQuery: string; overload; virtual;
+      function GetQuery(stageNum: Integer): string; overload; virtual;
+      function GetQueryList: TStringList; virtual;
+
+      property TableNames: TStringList read FTableNames write FTableNames;
+      property Options[index: Integer]: ISearchOptionPart read GetOption;
+      function GetDBMSManager: String; virtual;
+      procedure SetDBManager(dbm: TAbsDBManager); virtual;
+  end;
+
+implementation
+
+uses
+  QueryReader, Const_SearchOptionUnit;
+
+{ TSearchOption }
+
+
+
+procedure TSearchOption.AddSearchOption(key: String; option: ISearchOptionPart);
+begin
+  FOptHash.PutValue( key, option );
+end;
+
+function TSearchOption.Count: Integer;
+begin
+  result := FOptHash.Size;
+end;
+
+constructor TSearchOption.Create;
+begin
+  Init;
+end;
+
+destructor TSearchOption.Destroy;
+begin
+  FOptHash.Clear;
+  FTableNames.Free;
+end;
+
+function TSearchOption.GetDBMSManager: String;
+begin
+  result := FDBManager;
+end;
+
+function TSearchOption.GetOption(key: String): ISearchOptionPart;
+var
+  intfRet: ISearchOptionPart;
+begin
+  if Supports( FOptHash.GetValue( key ), ISearchOptionPart, intfRet ) = true  then
+  result := intfRet;
+end;
+
+function TSearchOption.GetQuery(stageNum: Integer): string;
+var
+  stgOpt: TStageOption;
+begin
+
+  if stageNum < 0 then
+  begin
+    stgOpt := TStageOption.Create;
+    stgOpt.SetUse( false );
+  end
+  else
+  begin
+    stgOpt := FStageOptionList.GetStageOption( stageNum );
+    if stgOpt = nil then
+    begin
+      result := GetQuery( -1 ); exit;
+    end;
+  end;
+
+  FOptHash.PutValue( 'stage', stgOpt );
+  result := GetQuery;
+end;
+
+function TSearchOption.GetQueryList: TStringList;
+var
+  sList: TStringList;
+  i: Integer;
+begin
+  sList := TStringList.Create;
+
+  for i := 0 to FStageOptionList.Count - 1 do
+  begin
+    sList.Add( GetQuery( i ) );
+  end;
+
+  result := sList;
+end;
+
+function TSearchOption.GetStageName(stageNum: Integer): String;
+begin
+  result := FStageOptionList.GetStageOption( stageNum ).StageName;
+end;
+
+function TSearchOption.GetStageNameList: TStringList;
+var
+  sList: TStringList;
+  i: Integer;
+begin
+  sList := TStringList.Create;
+
+  for i := 0 to FStageOptionList.Count - 1 do
+  begin
+    sList.Add( FStageOptionList.GetStageOption( i ).StageName );
+  end;
+
+  result := sList;
+end;
+
+function TSearchOption.GetQuery: string;
+var
+  sTagQuery: String;
+  queryReader: TQueryReader;
+  i: Integer;
+  sList: TStringList;
+begin
+  queryReader := TQueryReader.Create( FDBManager.GetDBMSName, 'insightviewer' );
+  sTagQuery := queryReader.GetQuery( 'template.viewer' );
+  sList := TStringList.Create;
+  sList.Delimiter := '.';
+
+  for i := 0 to Count - 1 do
+  begin
+    sList.DelimitedText := SOP_ITEM_SEQ[ i ];
+    sTagQuery := Options[ sList[ 0 ] ].InsertPartToQuery( sTagQuery, sList[ 1 ], i );
+  end;
+
+  queryReader.Free;
+  result := sTagQuery;
+end;
+
+procedure TSearchOption.Init;
+begin
+  FOptHash := TStrHashMap.Create;
+  FTableNames := TStringList.Create;
+end;
+
+procedure TSearchOption.SetDBManager(dbm: TAbsDBManager);
+begin
+  FDBManager := dbm;
+end;
+
+procedure TSearchOption.SetSearchOptions(options: array of ISearchOptionPart);
+begin
+
+end;
+
+procedure TSearchOption.SetStageOptionList(stageOptions: TStageOptionList);
+begin
+  FStageOptionList := stageOptions;
+end;
+
+end.

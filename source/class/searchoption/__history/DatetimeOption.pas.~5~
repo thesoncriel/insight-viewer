@@ -1,0 +1,50 @@
+unit DatetimeOption;
+
+interface
+uses
+  SearchOptionPart, SearchOption, SysUtils;
+
+type
+  TDatetimeOption = class(TAbsSearchOptionPart)
+    protected
+      function GetSplit: String;
+      procedure SetSplit(val: String);
+    public
+      constructor Create(searchOpt: TSearchOption); override;
+      function GetQueryPart: String;
+      function IsUse: Boolean; override;
+
+      property Split: String read GetSplit write SetSplit;
+  end;
+
+implementation
+
+{ TDatetimeOption }
+
+constructor TDatetimeOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  Items[ 'split' ] := 'false';
+end;
+
+function TDatetimeOption.GetQueryPart: String;
+begin
+
+end;
+
+function TDatetimeOption.GetSplit: String;
+begin
+
+end;
+
+function TDatetimeOption.IsUse: Boolean;
+begin
+
+end;
+
+procedure TDatetimeOption.SetSplit(val: String);
+begin
+
+end;
+
+end.

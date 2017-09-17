@@ -1,0 +1,53 @@
+unit RoundOption;
+
+interface
+
+uses
+  SearchOptionPart, SearchOption, SysUtils;
+
+type
+  TRoundOption = class(TAbsSearchOptionPart)
+    protected
+      function GetDecPlace: String;
+      procedure SetDecPlace( val: String);
+    public
+      constructor Create(searchOpt: TSearchOption); override;
+      function GetQueryPart: String;
+      function IsUse: Boolean;
+
+      property DecPlace: String read GetDecPlace write SetDecPlace;
+  end;
+
+implementation
+
+{ TRoundOption }
+
+
+
+constructor TRoundOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  FHashMap.PutValue( 'decplace', '7' );
+end;
+
+function TRoundOption.GetDecPlace: String;
+begin
+  result := Items[ 'decplace' ];
+end;
+
+function TRoundOption.GetQueryPart: String;
+begin
+  result := '';
+end;
+
+function TRoundOption.IsUse: Boolean;
+begin
+  result := FIsUse;
+end;
+
+procedure TRoundOption.SetDecPlace(val: String);
+begin
+  Items[ 'decplace' ] := val;
+end;
+
+end.

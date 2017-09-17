@@ -1,0 +1,105 @@
+unit Form_GraphViewUnit;
+
+interface
+
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Dialogs, FMXTee.Engine, FMXTee.Procs,
+  FMXTee.Chart, Data.Bind.EngExt, Fmx.Bind.DBEngExt, Data.Bind.Components,
+  Data.Bind.DBScope, Data.DB, FMXTee.Series, DataFileSaver;
+
+type
+  TForm_GraphView = class(TForm)
+    Chart_Graph: TChart;
+    DataSource_Graph: TDataSource;
+    Series1: TLineSeries;
+    BindingsList1: TBindingsList;
+    Series2: TBarSeries;
+  private
+    { Private declarations }
+  protected
+    function GetSeriesFromField(data: TDataSet; fieldNum: Integer): TLineSeries;
+  public
+    procedure SetTitle(title: String);
+    procedure SetData(data: TDataSet); overload;
+    procedure SetData(schResult: IDataSetIterator; index: Integer); overload;
+    function IsEventLog(tableName: String): Boolean;
+  end;
+
+var
+  Form_GraphView: TForm_GraphView;
+
+implementation
+
+uses
+  Const_SearchOptionUnit;
+
+{$R *.fmx}
+
+{ TForm_GraphView }
+
+procedure TForm_GraphView.SetData(data: TDataSet);
+var
+  arrSeries: array of TLineSeries;
+  i: Integer;
+begin
+  Chart_Graph.SeriesList.Clear;
+
+  SetLength( arrSeries, data.FieldCount - 1 );  //좌측 Datetime 열은 제외 한다.
+
+
+  for i := 0 to High( arrSeries ) do
+  begin
+    arrSeries[ i ] := GetSeriesFromField( data, i + 1 );
+  end;
+
+end;
+
+function TForm_GraphView.GetSeriesFromField(data: TDataSet; fieldNum: Integer): TLineSeries;
+var
+  series: TLineSeries;
+begin
+  series := TLineSeries.Create( nil );
+  series.ParentChart := Chart_Graph;
+  series.Title := data.FieldList[ fieldNum ].FieldName;
+  series.LegendTitle := data.FieldList[ fieldNum ].FieldName;
+
+  series.XValues.DateTime := true;
+
+  while data.Eof = false do
+  begin
+    series.AddXY( data.FieldList[ 0 ].AsDatetime, data.FieldList[ fieldNum ].AsFloat );
+    data.Next;
+  end;
+
+  data.First;
+  //series.SeriesColor := TAlphaColor.
+  result := series;
+end;
+
+procedure TForm_GraphView.SetData(schResult: IDataSetIterator; index: Integer);
+var
+  iCount: Integer;
+begin
+  iCount := -1;
+
+  while schResult.MoveNext = true do
+  begin
+    Inc( iCount );
+    if iCount = index then break;
+  end;
+
+  if iCount < 0 then exit;
+
+  SetData( schResult.CurData );
+  SetTitle( schResult.CurName );
+
+  schResult.MoveFirst;
+end;
+
+procedure TForm_GraphView.SetTitle(title: String);
+begin
+  Chart_Graph.Title.Text[ 0 ] := title;
+end;
+
+end.

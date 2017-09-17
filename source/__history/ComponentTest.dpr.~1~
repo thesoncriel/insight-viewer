@@ -1,0 +1,11 @@
+program ComponentTest;
+
+uses
+  FMX.Forms;
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.Run;
+end.

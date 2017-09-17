@@ -1,0 +1,113 @@
+unit Form_MainUnit;
+
+interface
+
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Dialogs, Data.Bind.EngExt,
+  Fmx.Bind.DBEngExt, Fmx.Bind.Editors, Data.Bind.Components, Data.Bind.DBLinks,
+  Fmx.Bind.DBLinks, Data.Bind.DBScope, Data.DB, FMX.Layouts, FMX.Grid,
+  Data.DBXFirebird, IBDatabase, IBSQL, Data.Win.ADODB, Data.SqlExpr, Data.FMTBcd,
+  System.Rtti, System.Bindings.Outputs, Fmx.Bind.Navigator, IBCustomDataSet,
+  UniProvider, InterBaseUniProvider, DBAccess, Uni, Datasnap.DBClient, SimpleDS,
+  Data.DBXMSSQL, FMX.ListBox;
+
+type
+  TForm_Main = class(TForm)
+    Button1: TButton;
+    BindingsList1: TBindingsList;
+    SQLConnection1: TSQLConnection;
+    BindScopeDB1: TBindScopeDB;
+    Button2: TButton;
+    BindGridLinkGrid11: TBindGridLink;
+    DataSource1: TDataSource;
+    DBLinkStringGrid12: TBindDBGridLink;
+    StringGrid1: TStringGrid;
+    SimpleDataSet1: TSimpleDataSet;
+    ListBox1: TListBox;
+    ADOConnection1: TADOConnection;
+    ADOQuery1: TADOQuery;
+    DataSource2: TDataSource;
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+  private
+    { Private declarations }
+    procedure AutoColumnSize;
+  public
+    { Public declarations }
+  end;
+
+var
+  Form_Main: TForm_Main;
+
+implementation
+
+uses
+  DBManager, MsSqlDBManager, FireBirdDBManager, DataFileSaver, ExcelSaver;
+
+{$R *.fmx}
+
+procedure TForm_Main.AutoColumnSize;
+var
+  I: Integer;
+  J: Integer;
+  maxCol: Array of Integer;
+  w: Integer;
+begin
+  SetLength( maxCol, StringGrid1.ColumnCount );
+  for I := 0 to High( maxCol ) do
+  begin
+    maxCol[ I ] := 0;
+  end;
+
+  for I := 0 to StringGrid1.RowCount - 1 do
+  begin
+    for J := 0 to StringGrid1.ColumnCount - 1 do
+    begin
+      w := Round( StringGrid1.Canvas.TextWidth( StringGrid1.Cells[ J, I ] ) );
+      if w > maxCol[ J ] then maxCol[ J ] := w;
+
+    end;
+  end;
+
+  for I := 0 to High( maxCol ) do
+  begin
+    StringGrid1.Columns[ I ].Width := maxCol[ I ] + 5;
+  end;
+end;
+
+procedure TForm_Main.Button1Click(Sender: TObject);
+var
+  dbm: TAbsDBManager;
+  data: TDataSet;
+begin
+
+//  dbm := TFireBirdDBManager.Create;
+//  dbm.Open('d:\gogo.fdb');
+//  data := dbm.ExecuteQuery( 'select * from haha' );
+
+  dbm := TMsSqlDBManager.Create;
+  dbm.Open('theson');
+  data := dbm.ExecuteQuery( 'select * from journal' );
+
+  datasource1.DataSet := data;
+           //dbm.GetColumnNames(
+  ListBox1.Items := dbm.GetTableNames;
+
+  AutoColumnSize();
+end;
+
+procedure TForm_Main.Button2Click(Sender: TObject);
+var
+  dbm: TAbsDBManager;
+  data: TDataSet;
+  saver: TExcelSaver;
+begin
+  dbm := TMsSqlDBManager.Create;
+  dbm.Open('theson');
+  data := dbm.ExecuteQuery( 'select * from protocol' );
+  saver := TExcelSaver.Create;
+  saver.SaveTo( data, 'd:\yoyo2.xls' );
+end;
+
+end.

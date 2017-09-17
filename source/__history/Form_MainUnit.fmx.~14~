@@ -1,0 +1,145 @@
+object Form_Main: TForm_Main
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Form1'
+  ClientHeight = 586
+  ClientWidth = 765
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Button1: TButton
+    Position.Point = '(16,288)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button1Click
+    TabOrder = 0
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button1'
+  end
+  object Button2: TButton
+    Position.Point = '(272,440)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button2Click
+    TabOrder = 1
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button2'
+  end
+  object StringGrid1: TStringGrid
+    Position.Point = '(16,64)'
+    Width = 321.000000000000000000
+    Height = 209.000000000000000000
+    StyleLookup = 'gridstyle'
+    TabOrder = 2
+    AlternatingRowBackground = True
+    RowHeight = 21.000000000000000000
+    RowCount = 0
+  end
+  object ListBox1: TListBox
+    Position.Point = '(448,8)'
+    Width = 148.000000000000000000
+    Height = 257.000000000000000000
+    TabOrder = 3
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = True
+    Left = 68
+    Top = 13
+    object BindGridLinkGrid11: TBindGridLink
+      Category = 'Links'
+      ColumnExpressions = <>
+      PosControlExpressions = <>
+      PosSourceExpressions = <>
+      FormatControlExpressions = <>
+      ClearControlExpressions = <>
+    end
+    object DBLinkStringGrid12: TBindDBGridLink
+      Category = 'DB Links'
+      DataSource = BindScopeDB1
+      GridControl = StringGrid1
+      Columns = <>
+    end
+  end
+  object SQLConnection1: TSQLConnection
+    ConnectionName = 'HAHAFB'
+    DriverName = 'FIREBIRD'
+    GetDriverFunc = 'getSQLDriverINTERBASE'
+    LibraryName = 'dbxfb.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'drivername=FIREBIRD'
+      'librarynameosx=libsqlfb.dylib'
+      'vendorlibwin64=fbclient.dll'
+      'vendorlibosx=/Library/Frameworks/Firebird.framework/Firebird'
+      'blobsize=-1'
+      'commitretain=False'
+      'Database=d:\gogo.fdb'
+      'localecode=0000'
+      'Password=masterkey'
+      'rolename=RoleName'
+      'sqldialect=1'
+      'isolationlevel=ReadCommitted'
+      'user_name=sysdba'
+      'waitonlocks=True'
+      'trim char=False')
+    TableScope = [tsSynonym, tsSysTable, tsTable, tsView]
+    VendorLib = 'fbclient.dll'
+    Connected = True
+    Left = 576
+    Top = 272
+  end
+  object BindScopeDB1: TBindScopeDB
+    DataSource = DataSource2
+    Left = 26
+    Top = 10
+  end
+  object DataSource1: TDataSource
+    DataSet = SimpleDataSet1
+    Left = 440
+    Top = 272
+  end
+  object SimpleDataSet1: TSimpleDataSet
+    Aggregates = <>
+    Connection = SQLConnection1
+    DataSet.GetMetadata = True
+    DataSet.NumericMapping = True
+    DataSet.CommandText = 'select * from haha;'
+    DataSet.MaxBlobSize = -1
+    DataSet.ParamCheck = False
+    DataSet.Params = <>
+    Params = <>
+    Left = 512
+    Top = 272
+  end
+  object ADOConnection1: TADOConnection
+    ConnectionString = 
+      'Provider=Microsoft.ACE.OLEDB.12.0; Data Source="d:\test.xlsx"; M' +
+      'ode=ReadWrite; Extended Properties="Excel 12.0 Xml; HDR=YES; IME' +
+      'X=1"; Persist Security Info=False;'
+    LoginPrompt = False
+    Mode = cmShareExclusive
+    Provider = 'Microsoft.ACE.OLEDB.12.0'
+    Left = 600
+    Top = 424
+  end
+  object ADOQuery1: TADOQuery
+    Connection = ADOConnection1
+    CursorType = ctDynamic
+    Parameters = <>
+    Prepared = True
+    SQL.Strings = (
+      'select * from [Sheet1$];')
+    Left = 544
+    Top = 424
+  end
+  object DataSource2: TDataSource
+    DataSet = ADOQuery1
+    Left = 480
+    Top = 424
+  end
+end

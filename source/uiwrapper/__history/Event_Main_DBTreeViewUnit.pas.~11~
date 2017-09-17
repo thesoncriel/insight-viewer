@@ -1,0 +1,114 @@
+unit Event_Main_DBTreeViewUnit;
+
+interface
+
+uses
+  FMX.TreeView, SearchOptionManager, DBManager, SearchResult;
+
+type
+  TEvent_DBTreeView = class(TObject)
+    private
+      FDBManager: TAbsDBManager;
+      FSearchOption: TSearchOptionManager;
+      FTreeView: TTreeView;
+
+      FOnAfterSearch: TSearchResultEvent;
+    protected
+      function AddChild(childText: String): TTreeViewItem;
+      procedure AddChildOfChild(child: TTreeViewItem; childText: String);
+
+      procedure TreeView_OnDblClick(Sender: TObject);
+    public
+      constructor Create(treeView: TTreeView);
+      procedure AddDBFileInfo(filePath: String);
+      procedure RemoveDBFileInfo(filePath: String);
+    published
+      property OnAfterSearch: TSearchResultEvent;
+  end;
+
+implementation
+
+uses
+  Form_MainUnit, System.SysUtils, System.Classes, Form_SearchOptionUnit,
+  System.UITypes;
+
+
+{ TEvent_DBTreeView }
+
+function TEvent_DBTreeView.AddChild(childText: String): TTreeViewItem;
+var
+  child: TTreeViewItem;
+begin
+  child := TTreeViewItem.Create;
+  child.Text := childText;
+  FTreeView.AddObject( child );
+
+  result := child;
+end;
+
+procedure TEvent_DBTreeView.AddChildOfChild(child: TTreeViewItem;
+  childText: String);
+var
+  childchildItem: TTreeViewItem;
+begin
+  childchildItem := TTreeViewItem.Create;
+  childchildItem.Text := childText;
+  child.AddObject( childchildItem );
+end;
+
+procedure TEvent_DBTreeView.AddDBFileInfo(filePath: String);
+var
+  sRestoreName: string;
+  tvChild: TTreeViewItem;
+  sList_Tables: TStringList;
+  i: Integer;
+begin
+  sRestoreName := ExtractFileName( filePath );
+  FDBManager.Restore( filePath, sRestoreName );
+  FDBManager.DBName := sRestoreName;
+
+  tvChild := AddChild( FDBManager.DBName );
+  sList_Tables := FDBManager.GetTableNames;
+
+  for i := 0 to sList_Tables.Count - 1 do
+  begin
+    AddChildOfChild( tvChild, sList_Tables[ i ] );
+  end;
+end;
+
+constructor TEvent_DBTreeView.Create(treeView: TTreeView);
+begin
+  FTreeView := treeView;
+  FTreeView.OnDblClick := TreeView_OnDblClick;
+end;
+
+procedure TEvent_DBTreeView.RemoveDBFileInfo(filePath: String);
+var
+  child: TTreeViewItem;
+  i: Integer;
+begin
+  for child in FTreeView.Items do
+  begin
+    if child.Text = filePath then
+    begin
+      FTreeView.RemoveObject( child );
+      FDBManager.DropDB( filePath );
+      exit;
+    end;
+  end;
+end;
+
+procedure TEvent_DBTreeView.TreeView_OnDblClick(Sender: TObject);
+var
+  modalRet: Integer;
+begin
+  modalRet := Form_SearchOption.ShowModal;
+
+  if modalRet = mrOK then
+  begin
+
+  end;
+
+end;
+
+end.

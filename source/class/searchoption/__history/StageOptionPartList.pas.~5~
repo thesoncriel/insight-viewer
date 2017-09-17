@@ -1,0 +1,88 @@
+unit StageOptionPartList;
+
+interface
+
+uses
+  UIWappedPartUnit, System.Classes, FMX.Controls, UIWrapper_StageEditorUnit,
+  UIWrapper_LogSearchUnit, StageOptionPart;
+
+type
+  TStageOptionList = class(TAbsUIWrappedPart)
+    private
+      FList: TList;
+      FChkAutoDetect: TCheckBox;
+      FStageEditor: TUIWrapper_StageEditor;
+      FLogSearch: TUIWrapper_LogSearch;
+    protected
+      procedure ChkAutoDetectCheckedChange(Sender: TObject);
+    public
+      constructor Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TUIWrapper_StageEditor; logSearch: TUIWrapper_LogSearch);
+      destructor Destroy;
+      //procedure Add(stageOpt: TStageOption);
+      //procedure Remove(stageOpt: TStageOption);
+      function Count: Integer;
+      function GetItem(index: Integer): TStageOption;
+
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+  end;
+
+implementation
+
+{ TStageOptionList }
+
+//procedure TStageOptionList.Add(stageOpt: TStageOption);
+//begin
+//  FList.Add( @stageOpt );
+//end;
+
+procedure TStageOptionList.ChkAutoDetectCheckedChange(Sender: TObject);
+begin
+  FStageEditor.SetEnabled( not FExpander.IsChecked );
+  FLogSearch.SetEnabled( not FExpander.IsChecked );
+end;
+
+function TStageOptionList.Count: Integer;
+begin
+  result := FStageEditor.Count;
+end;
+
+constructor TStageOptionList.Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TUIWrapper_StageEditor; logSearch: TUIWrapper_LogSearch);
+begin
+  Create( owner );
+  FList := TList.Create;
+  FChkAutoDetect := autoDetect;
+  FStageEditor := stageEditor;
+  FLogSearch := logSearch;
+
+  FExpander.OnCheckChange := ChkAutoDetectCheckedChange;
+end;
+
+//procedure TStageOptionList.Remove(stageOpt: TStageOption);
+//begin
+//  FList.Remove( @stageOpt );
+//end;
+
+procedure TStageOptionList.SetValues(key, val: String);
+begin
+
+end;
+
+destructor TStageOptionList.Destroy;
+begin
+  //FList.Free;
+end;
+
+function TStageOptionList.GetItem(index: Integer): TStageOption;
+begin
+  result := FStageEditor.GetStageOption( index );
+end;
+
+function TStageOptionList.GetValues(key: String): String;
+begin
+
+end;
+
+end.

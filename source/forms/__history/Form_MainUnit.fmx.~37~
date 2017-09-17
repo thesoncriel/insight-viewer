@@ -1,0 +1,155 @@
+object Form_Main: TForm_Main
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Insight Viewer'
+  ClientHeight = 639
+  ClientWidth = 885
+  Transparency = False
+  Visible = False
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnClose = FormClose
+  StyleLookup = 'backgroundstyle'
+  object TabControl_GridList: TTabControl
+    Align = alClient
+    Position.Point = '(205,70)'
+    Width = 675.000000000000000000
+    Height = 564.000000000000000000
+    Padding.Rect = '(0,5,5,5)'
+    TabOrder = 0
+    TabIndex = 0
+    TabHeight = 20.000000000000000000
+    object TabItem1: TTabItem
+      Width = 120.000000000000000000
+      Height = 20.000000000000000000
+      TabOrder = 0
+      Index = 0
+      Text = 'TabItem1'
+      WordWrap = False
+      object StringGrid1: TStringGrid
+        Align = alClient
+        Width = 675.000000000000000000
+        Height = 544.000000000000000000
+        StyleLookup = 'gridstyle'
+        TabOrder = 0
+        RowHeight = 21.000000000000000000
+        RowCount = 100
+      end
+    end
+    object TabItem2: TTabItem
+      Position.Point = '(120,0)'
+      Width = 80.000000000000000000
+      Height = 20.000000000000000000
+      TabOrder = 1
+      Index = 1
+      Text = 'TabItem2'
+      WordWrap = False
+    end
+  end
+  object MenuBar1: TMenuBar
+    Align = alTop
+    Width = 885.000000000000000000
+    Height = 65.000000000000000000
+    StyleLookup = 'menubarstyle'
+    TabOrder = 1
+    object Button_LoadDB: TButton
+      Position.Point = '(8,8)'
+      Width = 60.000000000000000000
+      Height = 50.000000000000000000
+      OnClick = Button_LoadDBClick
+      TabOrder = 0
+      StaysPressed = False
+      IsPressed = False
+      Text = 'Load DB'
+      WordWrap = True
+    end
+  end
+  object Splitter1: TSplitter
+    Align = alLeft
+    Cursor = crHSplit
+    Position.Point = '(200,65)'
+    Width = 5.000000000000000000
+    Height = 574.000000000000000000
+    TabOrder = 2
+    MinSize = 20.000000000000000000
+  end
+  object TabControl_DBList: TTabControl
+    Align = alLeft
+    Position.Point = '(0,65)'
+    Width = 200.000000000000000000
+    Height = 574.000000000000000000
+    TabOrder = 3
+    TabIndex = 0
+    TabHeight = 20.000000000000000000
+    object TabItem_FireBird: TTabItem
+      Width = 80.000000000000000000
+      Height = 20.000000000000000000
+      TabOrder = 0
+      Index = 0
+      Text = 'FireBird'
+      WordWrap = False
+      object TreeView_FireBird: TTreeView
+        Align = alClient
+        Width = 200.000000000000000000
+        Height = 554.000000000000000000
+        OnClick = TreeView_FireBirdClick
+        OnDblClick = TreeView_FireBirdDblClick
+        TabOrder = 0
+      end
+    end
+    object TabItem_MsSql: TTabItem
+      Position.Point = '(80,0)'
+      Width = 80.000000000000000000
+      Height = 20.000000000000000000
+      TabOrder = 1
+      Index = 1
+      Text = 'MS-SQL'
+      WordWrap = False
+      object TreeView_MsSql: TTreeView
+        Align = alClient
+        Width = 200.000000000000000000
+        Height = 554.000000000000000000
+        TabOrder = 0
+      end
+    end
+  end
+  object OpenDialog_LoadDB: TOpenDialog
+    Filter = 'DB Files (*.gdb; *.fdb; *.bak)|*.gdb;*.fdb;*.bak'
+    Left = 688
+    Top = 16
+  end
+  object SaveDialog_SaveExcel: TSaveDialog
+    Left = 800
+    Top = 16
+  end
+  object Button_Search: TButton
+    Position.Point = '(80,8)'
+    Width = 60.000000000000000000
+    Height = 50.000000000000000000
+    TabOrder = 4
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Search'
+  end
+  object Button_Graph: TButton
+    Position.Point = '(152,8)'
+    Width = 60.000000000000000000
+    Height = 50.000000000000000000
+    OnClick = Button_GraphClick
+    TabOrder = 5
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Graph'
+  end
+  object Button_Excel: TButton
+    Position.Point = '(224,8)'
+    Width = 60.000000000000000000
+    Height = 50.000000000000000000
+    OnClick = Button_ExcelClick
+    TabOrder = 6
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Save Excel'
+  end
+end

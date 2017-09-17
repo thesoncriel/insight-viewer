@@ -1,0 +1,23 @@
+unit Event_TreeView_DBListUnit;
+
+interface
+
+type
+  TEvent_DBT
+
+implementation
+
+uses
+  FMX.TreeView, Form_MainUnit;
+
+procedure MenuItem2Click(Sender: TObject);
+var
+  item: TTreeViewItem;
+begin
+  item := TTreeViewItem.Create( nil );
+  item.Text := 'haha';
+  //TreeView_DBList.Insert
+  Form_Main.TreeView_DBList.AddObject( item );
+end;
+
+end.

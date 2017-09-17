@@ -1,0 +1,60 @@
+unit StrOptComponent;
+
+interface
+
+uses
+  FMX.Controls, Classes;
+
+type
+  IStrOptionComponent = Interface
+  ['{6B3873BC-CB3D-4E85-8C79-76D2DE847E62}']
+    function GetValue: String;
+    procedure SetValue(val: String);
+  End;
+
+  TStrOptExpander = class(TExpander, IStrOptionComponent)
+    public
+      function GetValue: String;
+      procedure SetValue(val: String);
+  end;
+
+  TStrOptCheckButton = class(TButton, IStrOptionComponent)
+    public
+      constructor Create(owner: TComponent); override;
+      function GetValue: String;
+      procedure SetValue(val: String);
+  end;
+
+implementation
+
+{ TStrOptExpander }
+
+function TStrOptExpander.GetValue: String;
+begin
+
+end;
+
+procedure TStrOptExpander.SetValue(val: String);
+begin
+
+end;
+
+{ TStrOptCheckButton }
+
+constructor TStrOptCheckButton.Create(owner: TComponent);
+begin
+  inherited;
+
+end;
+
+function TStrOptCheckButton.GetValue: String;
+begin
+
+end;
+
+procedure TStrOptCheckButton.SetValue(val: String);
+begin
+
+end;
+
+end.

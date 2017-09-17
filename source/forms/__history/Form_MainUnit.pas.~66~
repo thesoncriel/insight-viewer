@@ -1,0 +1,148 @@
+unit Form_MainUnit;
+
+interface
+
+uses
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Dialogs, FMX.Menus, FMX.TabControl,
+  FMX.Layouts, FMX.TreeView, FMX.Grid, Uni, FMX.ExtCtrls, Data.Bind.EngExt,
+  Fmx.Bind.DBEngExt, Data.Bind.Components, Fmx.Bind.Editors, Data.DB,
+  Data.Bind.DBLinks, Fmx.Bind.DBLinks, Data.Bind.DBScope, UIWrapper_DBListUnit,
+  UIWrapper_StageGridListUnit, SearchResult, DataFileSaver;
+
+type
+  TForm_Main = class(TForm)
+    TreeView_FireBird: TTreeView;
+    TabControl_GridList: TTabControl;
+    TabItem1: TTabItem;
+    TabItem2: TTabItem;
+    MenuBar1: TMenuBar;
+    Splitter1: TSplitter;
+    Button_LoadDB: TButton;
+    StringGrid1: TStringGrid;
+    TabControl_DBList: TTabControl;
+    TabItem_FireBird: TTabItem;
+    TabItem_MsSql: TTabItem;
+    OpenDialog_LoadDB: TOpenDialog;
+    SaveDialog_SaveExcel: TSaveDialog;
+    TreeView_MsSql: TTreeView;
+    Button_Search: TButton;
+    Button_Graph: TButton;
+    Button_Excel: TButton;
+//    procedure MenuItem2Click(Sender: TObject);
+//    procedure MenuItem5Click(Sender: TObject);
+    procedure Button_LoadDBClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure Button_ExcelClick(Sender: TObject);
+    procedure Button_GraphClick(Sender: TObject);
+  private
+    { Private declarations }
+    FDBList: TUIWrapper_DBList;
+    FStageGridList: TUIWrapper_StageGridList;
+  protected
+    procedure DBList_OnAfterSearch(Sender: TObject; schResult: IDataSetIterator);
+    procedure DBList_OnFoundLogMsgData(Sender: TObject; val: Boolean);
+  public
+    { Public declarations }
+  end;
+
+var
+  Form_Main: TForm_Main;
+
+implementation
+
+uses
+  DBManager, FireBirdDBManager, ExcelSaver, FileManager, Form_GraphViewUnit;
+
+{$R *.fmx}
+
+procedure TForm_Main.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  FDBList.Free;
+  FStageGridList.Free;
+end;
+
+procedure TForm_Main.FormCreate(Sender: TObject);
+begin
+  FDBList := TUIWrapper_DBList.Create( TabControl_DBList, [ TreeView_FireBird, TreeView_MsSql ] );
+  FStageGridList := TUIWrapper_StageGridList.Create( TabControl_GridList );
+
+  FDBList.OnAfterSearch := DBList_OnAfterSearch;
+  FDBList.OnFoundLogMsgData := DBList_OnFoundLogMsgData;
+  TFile.CurrentDir := GetCurrentDir;
+end;
+
+procedure TForm_Main.FormDestroy(Sender: TObject);
+begin
+//  FDBList.Free;
+//  FStageGridList.Free;
+end;
+
+
+procedure TForm_Main.Button_ExcelClick(Sender: TObject);
+var
+  excelSaver: TExcelSaver;
+  iterData: IDataSetIterator;
+  bRet: Boolean;
+begin
+  if FStageGridList.Count > 0 then
+  begin
+    SaveDialog_SaveExcel.Filter := 'Excel File (*.xls)|*.xls';
+    SaveDialog_SaveExcel.FileName := 'c:\InsightDB.xls';
+
+    if SaveDialog_SaveExcel.Execute = true then
+    begin
+      iterData := FStageGridList.GetSeachResult;
+      excelSaver := TExcelSaver.Create;
+
+
+      if FStageGridList.Count = 1 then
+      begin
+        iterData.MoveNext;
+        bRet := excelSaver.SaveTo( iterData.CurData, SaveDialog_SaveExcel.FileName );
+      end
+      else
+      begin
+        excelSaver.SaveTo( iterData, SaveDialog_SaveExcel.FileName );
+      end;
+
+      excelSaver.Free;
+      ShowMessage( 'Excel Converting Success ! ^-^)~' );
+    end;
+  end;
+end;
+
+procedure TForm_Main.Button_GraphClick(Sender: TObject);
+begin
+  Form_GraphView.SetData( FStageGridList.GetSeachResult, FStageGridList.GetActiveTabIndex );
+  Form_GraphView.ShowModal;
+end;
+
+procedure TForm_Main.Button_LoadDBClick(Sender: TObject);
+// var
+//  dbm: TAbsDBManager;
+//  sList: TStringList;
+//  i: Integer;
+begin
+  if OpenDialog_LoadDB.Execute = true then
+  begin
+    FDBList.PassFileToTab( OpenDialog_LoadDB.FileName );
+  end;
+end;
+
+
+
+procedure TForm_Main.DBList_OnAfterSearch(Sender: TObject;
+  schResult: IDataSetIterator);
+begin
+  FStageGridList.SetSearchResult( schResult );
+end;
+
+procedure TForm_Main.DBList_OnFoundLogMsgData(Sender: TObject; val: Boolean);
+begin
+  Button_Graph.Enabled := val;
+end;
+
+end.

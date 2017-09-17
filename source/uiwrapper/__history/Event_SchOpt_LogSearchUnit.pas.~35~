@@ -1,0 +1,182 @@
+unit Event_SchOpt_LogSearchUnit;
+
+interface
+
+uses
+  FMX.ListBox, FMX.Edit, FMX.Controls, DB, System.UITypes, Classes, DCL_intf,
+  DBManager;
+
+type
+  TEvent_SchOpt_LogSearch = class(TObject)
+    private
+      FComboBox_LogTableName: TComboBox;
+      FEdit_SearchKeyword: TClearingEdit;
+      FButton_SearchLog: TButton;
+      FListBox_LogData: TListBox;
+      FLogDataSet: IStrMap;
+      FDBManager: TAbsDBManager;
+    protected
+      procedure SetDataByTableName(tableName: String);
+      function HasLogDataSet(tableName: String): Boolean;
+      procedure SetLogTableToComboBox(dbmsName: String);
+
+      procedure ListBox_LogDataMouseDown(Sender: TObject;
+                  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+      procedure ListBox_LogDataDragEnd(Sender: TObject);
+      procedure ComboBox_LogTableNameChange(Sender: TObject);
+      procedure ClearingEdit_KeywordKeyUp(Sender: TObject;
+                          var Key: Word; var KeyChar: Char; Shift: TShiftState);
+      procedure Button_LogSearchClick(Sender: TObject);
+    public
+      constructor Create(logTableName: TComboBox; searchKeyword: TClearingEdit;
+                          searchLog: TButton; logData: TListBox; dbm: TAbsDBManager);
+      procedure SetData(data: TDataSet);
+      procedure Clear;
+      procedure SearchLog(tableName, keyword: String);
+  end;
+
+implementation
+
+uses
+  SysUtils, HashMap, QueryReader;
+
+{ TEvent_SchOpt_LogSearch }
+
+constructor TEvent_SchOpt_LogSearch.Create(logTableName: TComboBox;
+  searchKeyword: TClearingEdit; searchLog: TButton; logData: TListBox; dbm: TAbsDBManager);
+begin
+  FComboBox_LogTableName := logTableName;
+  FEdit_SearchKeyword := searchKeyword;
+  FButton_SearchLog := searchLog;
+  FListBox_LogData := logData;
+  FDBManager := dbm;
+  FLogDataSet := TStrHashMap.Create;
+
+  SetLogTableToComboBox( dbm.GetDBMSName );
+
+  FListBox_LogData.OnMouseDown := ListBox_LogDataMouseDown;
+  FListBox_LogData.OnDragEnd := ListBox_LogDataDragEnd;
+  FComboBox_LogTableName.OnChange := ComboBox_LogTableNameChange;
+  FEdit_SearchKeyword.OnKeyUp := ClearingEdit_KeywordKeyUp;
+  FButton_SearchLog.OnClick := Button_LogSearchClick;
+end;
+
+function TEvent_SchOpt_LogSearch.HasLogDataSet(tableName: String): Boolean;
+begin
+  result := ( FLogDataSet.ContainsKey( tableName ) = true ) and
+            ( FLogDataSet.GetValue( tableName ) <> nil );
+end;
+
+procedure TEvent_SchOpt_LogSearch.SearchLog(tableName, keyword: String);
+var
+  data: TDataSet;
+begin
+  if HasLogDataSet( tableName ) = true then
+  begin
+    data := TDataSet( FLogDataSet.GetValue( tableName ) );
+  end
+  else
+  begin
+    exit;
+  end;
+
+  if keyword <> '' then
+  begin
+    data.Filter := 'msg like ''%' + keyword + '%''';
+    data.Filtered := true;
+  end
+  else
+  begin
+    data.Filtered := false;
+  end;
+
+  SetData( data );
+end;
+
+procedure TEvent_SchOpt_LogSearch.SetData(data: TDataSet);
+var
+  field: TField;
+  sDate: String;
+begin
+  FListBox_LogData.Clear;
+
+  while data.Eof = false do
+  begin
+    DateTimeToString( sDate, 'yyyy-MM-dd HH:mm:ss', data.Fields[ 0 ].AsDateTime );
+    FListBox_LogData.Items.Add( sDate + ' | ' + data.Fields[ 1 ].AsString );
+    data.Next;
+  end;
+end;
+
+procedure TEvent_SchOpt_LogSearch.SetDataByTableName(tableName: String);
+var
+  data: TDataSet;
+  qReader: TQueryReader;
+  sQuery: String;
+  sAnsiQuery: AnsiString;
+begin
+  qReader := TQueryReader.Create( FDBManager.GetDBMSName, 'insightviewer' );
+  sQuery := qReader.GetQuery( 'datalog.' + tableName );
+  sAnsiQuery := WideStringToString( sQuery );
+  data := FDBManager.ExecuteQuery( sQuery );
+  FLogDataSet.PutValue( tableName, data );
+
+  qReader.Free;
+  SetData( data );
+end;
+
+procedure TEvent_SchOpt_LogSearch.SetLogTableToComboBox(dbmsName: String);
+begin
+  if      dbmsName = 'mssql' then
+  begin
+    FComboBox_LogTableName.Clear;
+    FComboBox_LogTableName.Items.Add( 'journal' );
+  end
+  else if dbmsName = 'firebird' then
+  begin
+    FComboBox_LogTableName.Clear;
+    FComboBox_LogTableName.Items.Add( 'EVENTLOG' );
+    FComboBox_LogTableName.Items.Add( 'ALARMLOG' );
+  end;
+end;
+
+procedure TEvent_SchOpt_LogSearch.ListBox_LogDataMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  FListBox_LogData.AllowDrag := true;
+
+end;
+
+procedure TEvent_SchOpt_LogSearch.ListBox_LogDataDragEnd(Sender: TObject);
+begin
+  FListBox_LogData.AllowDrag := false;
+end;
+
+procedure TEvent_SchOpt_LogSearch.Clear;
+begin
+  FLogDataSet.Clear;
+end;
+
+procedure TEvent_SchOpt_LogSearch.ComboBox_LogTableNameChange(Sender: TObject);
+begin
+  if FComboBox_LogTableName.ItemIndex > -1 then
+  begin
+    SetDataByTableName( FComboBox_LogTableName.Selected.Text );
+  end;
+end;
+
+procedure TEvent_SchOpt_LogSearch.ClearingEdit_KeywordKeyUp(Sender: TObject;
+  var Key: Word; var KeyChar: Char; Shift: TShiftState);
+begin
+  if KeyChar = #13 then
+  begin
+    SearchLog( FComboBox_LogTableName.Selected.Text, FEdit_SearchKeyword.Text );
+  end;
+end;
+
+procedure TEvent_SchOpt_LogSearch.Button_LogSearchClick(Sender: TObject);
+begin
+  SearchLog( FComboBox_LogTableName.Selected.Text, FEdit_SearchKeyword.Text );
+end;
+
+end.

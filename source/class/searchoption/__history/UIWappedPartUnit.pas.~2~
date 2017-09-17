@@ -1,0 +1,40 @@
+unit UIWappedPartUnit;
+
+interface
+
+uses
+  SearchOption_Intf, FMX.Controls;
+
+type
+  TAbsUIWrappedPart = class(TAbsSearchOptionPart)
+    protected
+      FExpander: TExpander;
+    public
+      constructor Create(expander: TExpander);
+      function IsUse: Boolean; override;
+      procedure SetUse(val: Boolean); override;
+  end;
+implementation
+
+{ TUIWrappedSearchOptionPart }
+
+constructor TAbsUIWrappedPart.Create(expander: TExpander);
+begin
+  FExpander := expander;
+end;
+
+function TAbsUIWrappedPart.IsUse: Boolean;
+begin
+  result := ( FExpander.ShowCheck = false ) or
+            ( ( FExpander.ShowCheck = true ) and ( FExpander.IsChecked = true ) );
+end;
+
+procedure TAbsUIWrappedPart.SetUse(val: Boolean);
+begin
+  if FExpander.ShowCheck = true then
+  begin
+    FExpander.IsChecked := val;
+  end;
+end;
+
+end.

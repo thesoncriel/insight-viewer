@@ -1,0 +1,112 @@
+unit ColumnOption;
+
+interface
+
+uses
+  SearchOptionPart, Classes, SearchOption;
+
+type
+  TColumnOption = class(TAbsSearchOptionPart)
+    private
+      FColumnList: TStringList;
+      FExceptDate: Boolean;
+    protected
+      function GetSemiQueryPartByOtherOpt: String;
+      function IsDatetime(column: String): Boolean;
+    public
+      constructor Create(searchOpt: TSearchOption);
+      destructor Destroy; override;
+      function GetQueryPart: String;
+      procedure SetColumns(strList: TStringList; exceptDate: Boolean);
+
+      property ExceptForDatetime: Boolean read FExceptDate write FExceptDate;
+  end;
+implementation
+
+uses
+  SysUtils, StrUtils;
+
+{ TColumnOption }
+
+constructor TColumnOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  FSearchOpt := searchOpt;
+  FColumnList := TStringList.Create;
+  FIsUse := true;
+end;
+
+destructor TColumnOption.Destroy;
+begin
+  FColumnList.Free;
+  inherited;
+end;
+
+function TColumnOption.GetQueryPart: String;
+var
+  sSemiQuery: String;
+  sEnum: TStringsEnumerator;
+  sQueryPart: String;
+  sEnumCurr: String;
+begin
+  sQueryPart := '';
+  sSemiQuery := GetSemiQueryPartByOtherOpt;
+  sEnum := FColumnList.GetEnumerator;
+
+//  if sEnum.MoveNext = true then
+//  begin
+//    sEnumCurr := sEnum.GetCurrent;
+//    sQueryPart := Format( sSemiQuery, [ sEnumCurr, sEnumCurr ] );
+//  end;
+
+  while sEnum.MoveNext = true do
+  begin
+    sEnumCurr := sEnum.GetCurrent;
+    sQueryPart := sQueryPart + ', ' + Format( sSemiQuery, [ sEnumCurr, sEnumCurr ] );
+  end;
+
+  result := sQueryPart + ' ';
+end;
+
+function TColumnOption.GetSemiQueryPartByOtherOpt: String;
+var
+  sDecPlace, sFunc: String;
+  sMixed: String;
+begin
+  sMixed := ' [%s]';
+
+  if FIsUse = true then
+  begin
+    if FSearchOpt.Options[ 'group' ].IsUse = true then
+    begin
+      sFunc := FSearchOpt.Values[ 'group', 'func' ];
+      sMixed := sFunc + '([%s])';
+    end;
+    if FSearchOpt.Options[ 'round' ].IsUse = true then
+    begin
+      sDecPlace := FSearchOpt.Values[ 'round', 'decplace' ];
+      sMixed := 'round(' + sMixed + ', ' + sDecPlace + ') as' + sMixed;
+    end;
+  end;
+
+  result := sMixed;
+end;
+
+function IsDatetime(column: String): Boolean;
+var
+  sLower: String;
+  bRet: Boolean;
+begin
+  sLower := LowerCase( column );
+  bRet := ContainsStr( sLower, 'date' ) = false;
+  bRet := ContainsStr( sLower, 'time' ) = false;
+
+  result := ( bRet = false );
+end;
+
+procedure TColumnOption.SetColumns(strList: TStringList; exceptDate: Boolean);
+begin
+  FColumnList := strList;
+end;
+
+end.

@@ -1,0 +1,125 @@
+unit StageOptionPart;
+
+interface
+
+uses
+  SearchOption_Intf, Classes, FMX.Controls, UIWrapper_StageEditorUnit,
+  UIWrapper_LogSearchUnit, UIWappedPartUnit;
+
+
+type
+
+  TStageOption = class(TAbsSearchOptionPart)
+    private
+      FTitle: String;
+      FLogData_Start: ILogData;
+      FLogData_End: ILogData;
+    public
+      function GetValues(key: String): String;
+      procedure SetValues(key, val: String);
+
+      property StageName: String read FTitle write FTitle;
+      property StartLog: ILogData read FLogData_Start write FLogData_Start;
+      property EndLog: ILogData read FLogData_End write FLogData_End;
+  end;
+
+  TStageOptionList = class(TAbsUIWrappedPart)
+    private
+      FList: TList;
+      FChkAutoDetect: TCheckBox;
+      FStageEditor: TUIWrapper_StageEditor;
+      FLogSearch: TUIWrapper_LogSearch;
+    protected
+      procedure ChkAutoDetectCheckedChange(Sender: TObject);
+    public
+      constructor Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TUIWrapper_StageEditor; logSearch: TUIWrapper_LogSearch);
+      destructor Destroy;
+      procedure Add(stageOpt: TStageOption);
+      procedure Remove(stageOpt: TStageOption);
+      function Count: Integer;
+      function GetItem(index: Integer): TStageOption;
+
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+  end;
+
+implementation
+
+uses
+  SysUtils;
+
+
+
+{ TStageOption }
+
+function TStageOption.GetValues(key: String): String;
+begin
+  if      key = 'title' then result := FTitle
+  else if key = 'start' then result := FLogData_Start.GetDate
+  else if key = 'start_msg'   then result := FLogData_End.GetMsg
+  else if key = 'end'   then result := FLogData_End.GetDate
+  else if key = 'end_msg'   then result := FLogData_End.GetMsg
+  else    result := '';
+end;
+
+procedure TStageOption.SetValues(key, val: String);
+begin
+  if      key = 'title' then FTitle := val;
+end;
+
+{ TStageOptionList }
+
+procedure TStageOptionList.Add(stageOpt: TStageOption);
+begin
+  FList.Add( @stageOpt );
+end;
+
+procedure TStageOptionList.ChkAutoDetectCheckedChange(Sender: TObject);
+begin
+
+end;
+
+function TStageOptionList.Count: Integer;
+begin
+  result := FList.Count;
+end;
+
+constructor TStageOptionList.Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TUIWrapper_StageEditor; logSearch: TUIWrapper_LogSearch);
+begin
+  Create( owner );
+  FList := TList.Create;
+  FChkAutoDetect := autoDetect;
+  FStageEditor := stageEditor;
+  FLogSearch := logSearch;
+
+  FExpander.OnCheckChange := ChkAutoDetectCheckedChange;
+end;
+
+procedure TStageOptionList.Remove(stageOpt: TStageOption);
+begin
+  FList.Remove( @stageOpt );
+end;
+
+procedure TStageOptionList.SetValues(key, val: String);
+begin
+
+end;
+
+destructor TStageOptionList.Destroy;
+begin
+  FList.Free;
+end;
+
+function TStageOptionList.GetItem(index: Integer): TStageOption;
+begin
+  result := TStageOption( FList.Items[ index ] );
+end;
+
+function TStageOptionList.GetValues(key: String): String;
+begin
+
+end;
+
+end.

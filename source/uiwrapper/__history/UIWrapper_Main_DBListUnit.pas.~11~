@@ -1,0 +1,47 @@
+unit UIWrapper_Main_DBListUnit;
+
+interface
+
+uses
+  FMX.TabControl, FMX.TreeView;
+
+type
+  TUIWrapper_Main_DBList = class(TObject)
+    private
+      FTabControl: TTabControl;
+      FTreeViews: array of TTreeView;
+    public
+      constructor Cretae(tabCtrl: TTabControl; treeViews: array of TTreeView);
+      procedure ChangeTab(index: Integer);
+      procedure PassFileToTab(filePath: String);
+  end;
+
+implementation
+
+{ TUIWrapper_Main_DBList }
+
+constructor TUIWrapper_Main_DBList.Cretae(tabCtrl: TTabControl; treeViews: array of TTreeView);
+var
+  i: Integer;
+begin
+  FTabControl := tabCtrl;
+  SetLength( FTreeViews, Length( treeViews ) );
+
+  for i := 0 to High( treeViews ) do
+  begin
+    FTreeViews[ i ] := treeViews[ i ];
+  end;
+
+end;
+
+procedure TUIWrapper_Main_DBList.PassFileToTab(filePath: String);
+begin
+
+end;
+
+procedure TUIWrapper_Main_DBList.ChangeTab(index: Integer);
+begin
+
+end;
+
+end.

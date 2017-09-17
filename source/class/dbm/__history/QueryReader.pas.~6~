@@ -1,0 +1,154 @@
+//-----------------------------------------------------------------+
+// 파일명칭:    Unit_Class_QueryReader
+// 프로젝트:    InsightViewer
+// 처리개요:    MS-SQL Server 및 SQLite 의 Query문을 XML에서 읽어 오기
+// 개발언어:    Delphi 2007 & XE2
+// 작성수정:    아즈텍 장비개발팀 S/W 손준현s
+// 개발버전:    Ver 1.1 (2011.10.10)
+//-----------------------------------------------------------------+
+unit QueryReader;
+
+interface
+uses
+  XMLDoc, xmldom;
+
+const
+  XML_FILE_PATH = '..\config\query.xml';
+type
+//-----------------------------------------------------------------+
+// 클래스명:    TQueryReader
+// 주요역할:    DB관련 Query 처리시 코드내의 복잡하게 정의된 Query문을 대신하여
+//    미리 XML 문서내에 정의해 둔 Query문을 가져오기 위한 클래스 이다.
+//    생성시 사용할 DB-Type과 S/W 이름을 매개 변수로써 넣어 주어야 한다.
+//
+//-----------------------------------------------------------------+
+    TQueryReader = Class(TObject)
+       private
+
+         xmlBaseData: IDOMNodeList;
+       public
+         Constructor Create(); overload;
+         Constructor Create(dbType, product: String); overload;
+         Destructor Destroy(); override;
+         function GetQuery(content: String): String;
+         function MixQuery(formatedQuery: String; values: array of String): String;
+         function GetAndMixQuery(content: String; values: array of String): String;
+         function Format(formatedQuery: String; values: array of String): String;
+         function GetAndFormat(content: String; values: array of String): String;
+     End;
+implementation
+
+uses
+  SysUtils, DCLUtil, iniFiles, FileManager;
+   
+{ TQueryReader }
+
+//-----------------------------------------------------------------+
+// 기본 생성자.
+// 오버로드된 다른 생성자를 불러들이며
+// 사용되는 DB는 MS-SQL, S/W는 InsightViewer로 기본 설정 된다.
+//-----------------------------------------------------------------+
+constructor TQueryReader.Create;
+begin
+  self.Create( 'mssql', 'insightviewer' );
+end;
+
+//-----------------------------------------------------------------+
+// 생성자. 사용할 dbType, product 값을 이용하여
+// query.xml(기본값)내에서 그에 해당되는 NodeList를 미리 추출 한다.
+// 추출된 NodeList는 후에 GetQuery를 수행시 Node 검색에 이용된다.
+//-----------------------------------------------------------------+
+constructor TQueryReader.Create(dbType, product: String);
+var
+  xmldoc: TXMLDocument;
+  nodeList: IDOMNodeList;
+  sID: String;
+  i: Integer;
+begin
+  xmldoc := TXMLDocument.Create( nil );
+  xmldoc.LoadFromFile( TFile.CurrentDir + '\' + XML_FILE_PATH );
+  nodeList := xmldoc.DOMDocument.getElementsByTagName( 'product' );
+  sID := dbType + '.' + product;
+
+  for i := 0 to nodeList.length - 1 do
+  begin
+    if nodeList.item[ i ].attributes.getNamedItem( 'id' ).nodeValue = sID then
+    begin
+      xmlBaseData := nodeList.item[ i ].childNodes;
+      exit;
+    end;
+  end;
+  raise Exception.Create( 'Not exists data about DBType & Product.' );
+end;
+   
+destructor TQueryReader.Destroy;
+begin
+ FreeAndNil( xmlBaseData );
+ inherited;
+end;
+
+function TQueryReader.Format(formatedQuery: String;
+  values: array of String): String;
+begin
+  result := Format(formatedQuery, values);
+end;
+
+
+function TQueryReader.GetAndFormat(content: String;
+  values: array of String): String;
+begin
+  result := Format(GetQuery(content), values);
+end;
+
+//-----------------------------------------------------------------+
+// GetQuery와 MixQuery가 합쳐진 형태.
+// content로 가져온 Query에 값들을 넣고 결과 Query를 return 한다.
+//-----------------------------------------------------------------+
+function TQueryReader.GetAndMixQuery(content: String;
+ values: array of String): String;
+var
+  sQuery: String;
+begin
+  sQuery := GetQuery( content );
+  result := MixQuery( sQuery, values );
+end;
+
+//-----------------------------------------------------------------+
+// content 이름으로 Query를 가져 온다.
+//-----------------------------------------------------------------+
+function TQueryReader.GetQuery(content: String): String;
+var
+  i: Integer;
+  node: IDOMNode;
+begin
+  for i := 0 to xmlBaseData.length - 1 do
+  begin
+    node := xmlBaseData.item[i];
+    if ( node <> nil ) and ( node.attributes.getNamedItem( 'content' ).nodeValue = content ) then
+    begin
+      result := node.childNodes[ 0 ].nodeValue;
+      exit;
+    end;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 미리 형식이 정의된 Query에 값들을 넣어 주고 그 결과를 return 한다.
+//-----------------------------------------------------------------+
+function TQueryReader.MixQuery(formatedQuery: String;
+ values: array of String): String;
+var
+  i, iArrMax: Integer;
+  sTemp: String;
+begin
+  sTemp := formatedQuery;
+  iArrMax := High( values );
+  for i := 0 to iArrMax do
+  begin
+    sTemp := StringReplace( sTemp, '{' + IntToStr( i ) + '}', values[ i ], [ rfReplaceAll, rfIgnoreCase ] );
+  end;
+  result := sTemp;
+end;
+
+
+end.

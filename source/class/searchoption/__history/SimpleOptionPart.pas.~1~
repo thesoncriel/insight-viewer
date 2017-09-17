@@ -1,0 +1,17 @@
+unit SimpleOptionPart;
+
+interface
+
+type
+  TSimpleOptionPart = class(TAbsSearchOptionPart)
+    protected
+      FValue: String;
+    public
+      function GetValues(key: String): String; virtual; override;
+      procedure SetValues(key, val: String); virtual; override;
+      property Items[key: String]: String read GetValues write SetValues;
+  end;
+
+implementation
+
+end.

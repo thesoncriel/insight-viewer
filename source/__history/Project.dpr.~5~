@@ -1,0 +1,41 @@
+program Project;
+{
+begin
+  Application.Initialize;
+  Application.CreateForm(TFormMain, FormMain);
+  Application.Run;
+end.
+}
+
+
+
+
+
+
+
+
+uses
+  FMX.Forms,
+  DBManager in 'class\dbm\DBManager.pas',
+  MsSqlDBManager in 'class\dbm\MsSqlDBManager.pas',
+  QueryReader in 'class\dbm\QueryReader.pas',
+  AbstractContainer in 'class\dcl\AbstractContainer.pas',
+  Algorithms in 'class\dcl\Algorithms.pas',
+  ArrayList in 'class\dcl\ArrayList.pas',
+  ArraySet in 'class\dcl\ArraySet.pas',
+  BinaryTree in 'class\dcl\BinaryTree.pas',
+  DCL_intf in 'class\dcl\DCL_intf.pas',
+  DCLUtil in 'class\dcl\DCLUtil.pas',
+  HashMap in 'class\dcl\HashMap.pas',
+  HashSet in 'class\dcl\HashSet.pas',
+  LinkedList in 'class\dcl\LinkedList.pas',
+  Queue in 'class\dcl\Queue.pas',
+  Stack in 'class\dcl\Stack.pas',
+  Vector in 'class\dcl\Vector.pas',
+  Form_MainUnit in 'Form_MainUnit.pas' {Form_Main};
+
+begin
+  Application.Initialize;
+  Application.CreateForm(TForm_Main, Form_Main);
+  Application.Run;
+end.

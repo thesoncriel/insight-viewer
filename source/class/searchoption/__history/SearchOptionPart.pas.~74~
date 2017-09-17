@@ -1,0 +1,95 @@
+﻿unit SearchOptionPart;
+
+interface
+
+uses
+  Classes, DCL_intf, SearchOption_Intf;
+
+type
+  TAbsSearchOptionPart = class(TInterfacedObject, ISearchOptionPart)
+    protected
+      FHashMap: IStrMap;
+      FUse: Boolean;
+      function GetItem(key: String): String; virtual;
+      procedure SetItem(key: String; val: String); virtual;
+    public
+      constructor Create; virtual;
+      destructor Destroy; override;
+      property Items[key: String]: String read GetItem write SetItem;
+
+      function GetValues(key: String): String; virtual;
+      procedure SetValues(key, val: String); virtual;
+      function InsertPartToQuery(tagQuery, key: String; currIndex): String; virtual;
+      function IsUse: Boolean; virtual;
+      procedure SetUse(val: Boolean); virtual;
+  end;
+
+  TListOptionPart = class(TSearchOptionPart)
+    public
+      function InsertPartToQuery(tagQuery, key: String; currIndex): String; virtual; override;
+  end;
+
+
+implementation
+
+uses
+  HashMap, System.SysUtils;
+
+{ TAbsSearchOptionPart }
+
+constructor TAbsSearchOptionPart.Create(searchOpt: TSearchOption);
+begin
+  FHashMap := TStrHashMap.Create;
+  FUse := false;
+end;
+
+destructor TAbsSearchOptionPart.Destroy;
+begin
+  FHashMap.Clear;
+  FHashMap._Release;
+  inherited;
+end;
+
+function TAbsSearchOptionPart.GetItem(key: String): String;
+begin
+  result := String( FHashMap.GetValue( key ) );
+end;
+
+function TAbsSearchOptionPart.GetValues(key: String): String;
+begin
+  result := GetItem( key );
+end;
+
+function TAbsSearchOptionPart.IsUse: Boolean;
+begin
+  result := FUse;
+end;
+
+procedure TAbsSearchOptionPart.SetItem(key: String; val: String);
+begin
+  FHashMap.PutValue( key, TObject( val ) );
+end;
+
+procedure TAbsSearchOptionPart.SetParentOpt(searchOpt: TSearchOption);
+begin
+  FSearchOpt := searchOpt;
+end;
+
+procedure TAbsSearchOptionPart.SetUse(val: Boolean);
+begin
+  FUse := val;
+end;
+
+{ TCustomOptionPart }
+
+function TCustomOptionPart.GetQueryPart: String;
+begin
+
+end;
+
+procedure TCustomOptionPart.SetPreparedQueryPart(preQuery: String);
+begin
+
+end;
+
+end.

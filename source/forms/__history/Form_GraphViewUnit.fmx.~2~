@@ -1,0 +1,37 @@
+object Form_GraphView: TForm_GraphView
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Insight Viewer - Graph View'
+  ClientHeight = 400
+  ClientWidth = 600
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Chart_Graph: TChart
+    Align = alClient
+    Width = 600.000000000000000000
+    Height = 400.000000000000000000
+    Title.Text.Strings = (
+      'TChart')
+    Zoom.Brush.Kind = bkNone
+    TabOrder = 1
+    ColorPaletteIndex = 13
+  end
+  object DataSource_Graph: TDataSource
+    Left = 552
+    Top = 16
+  end
+  object BindScopeDB_Graph: TBindScopeDB
+    DataSource = DataSource_Graph
+    Left = 496
+    Top = 16
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = True
+    Left = 20
+    Top = 5
+  end
+end

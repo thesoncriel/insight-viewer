@@ -1,0 +1,117 @@
+unit FileManager;
+
+interface
+
+type
+  TFile = class(TObject)
+    private
+      class var FCurrentDir: String;
+    public
+      function CreateTextFile(filePath: string): Boolean;
+      procedure TextFileAppend(filePath, msg: String);
+      function CreateAllDir(directory: String): Boolean;
+      function GetParentDir(const Directory: String): String;
+      function CopyFile(srcFile, desFile: String): Boolean;
+      class property CurrentDir: String read FCurrentDir write FCurrentDir;
+  end;
+
+implementation
+
+uses
+  SysUtils, Windows;
+
+//-----------------------------------------------------------------+
+// 텍스트 파일의 기존 내용에 새로이 추가 해 준다.
+// 만약 지정한 경로에 파일이 없을 경우 새로 생성 한다.
+// filePath: 내용을 추가 할 텍스트 파일의 경로.
+// msg: 추가할 내용.
+//-----------------------------------------------------------------+
+procedure TFile.TextFileAppend(filePath, msg: String);
+var
+  targetFile: TextFile;
+begin
+  CreateTextFile(filePath);
+  AssignFile(targetFile, filePath);
+  Append(targetFile);
+  Writeln(targetFile, msg);
+  CloseFile(targetFile);
+end;
+
+//-----------------------------------------------------------------+
+// 지정한 경로에 텍스트 파일을 만든다.
+// 만약 그 경로에 해당되는 부모 폴더가 없다면 스스로 만든다.
+// filePath: 텍스트 파일을 만들 경로.
+//-----------------------------------------------------------------+
+function TFile.CreateTextFile(filePath: string): Boolean;
+var
+  iFileHandlerId: Integer;
+begin
+  try
+    CreateAllDir(GetParentDir(filePath));
+    if FileExists(filePath) = false then
+    begin
+      iFileHandlerId := FileCreate(filePath);
+      SysUtils.FileClose(iFileHandlerId);
+    end;
+    result := true;
+  except
+    result := false;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 설정한 경로의 폴더를 만든다.
+// 만약 상위 폴더가 없다면 그것도 함께 만든다. (재귀 호출 사용)
+// directory: 폴더를 만들 경로./
+//-----------------------------------------------------------------+
+
+
+function TFile.CreateAllDir(directory: String): Boolean;
+var
+  targetFile: TextFile;
+  parentPath: String;
+  iFileHandlerId: Integer;
+begin
+  parentPath := GetParentDir(directory);
+  try
+    if DirectoryExists(parentPath) = false then
+    begin
+      CreateAllDir(parentPath);
+    end;
+    CreateDir(directory);
+    result := true;
+  except
+    result := false;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 지정한 경로를 통해 부모 폴더의 경로를 얻는다.
+// Directory: 부모 폴더의 경로를 얻고 싶은 전체 경로.
+//-----------------------------------------------------------------+
+function TFile.GetParentDir(const Directory: String): String;
+var
+  TempStr: String;
+begin
+  TempStr := Directory;
+  if (TempStr[Length(Result)] = '\') then
+  begin
+  Delete(TempStr, Length(TempStr), 1);
+  end;
+  Result := Copy(TempStr, 1, LastDelimiter('\', TempStr) - 1);
+end;
+
+function TFile.CopyFile(srcFile, desFile: String): Boolean;
+begin
+  try
+    CreateAllDir( desFile );
+    Windows.CopyFile( PWideChar( srcFile ), PWideChar( desFile ), false);
+    result := true; exit;
+  except
+//    on e: Exception
+//    do WriteErrorMessage( e.Message );
+  end;
+  result := false;
+end;
+
+end.

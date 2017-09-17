@@ -1,0 +1,111 @@
+unit Event_SchOpt_ColumnUnit;
+
+interface
+
+uses
+  Event_SchOpt_SchOptPartUnit, FMX.ListBox, FMX.Controls, FMX.Types,
+  SearchOption_Intf;
+
+const
+  ITEM_NAME_COLUMN_LISTBOX = 'ListBox_Column';
+  ITEM_NAME_COLUMN_ALLSEL = 'Button_AllSelect';
+  ITEM_NAME_COLUMN_CLEAR = 'Button_Clear';
+
+type
+  TEvent_ColumnListPart = class(TEvent_AbsSearchOptionPart)
+    private
+      FListBox: TListBox;
+      FBtnAllSelect: TButton;
+      FBtnClear: TButton;
+    protected
+      procedure BtnAllSelect_OnClick(sender: TObject);
+      procedure BtnClear_OnClick(sender: TObject);
+      procedure SetCheckAllItems(val: Boolean);
+      function GetButton(owner: TFmxObject): TButton;
+    public
+      constructor Create(owner: TExpander); override;
+      destructor Destroy; override;
+      function GetSearchOptionPart: ISearchOptionPart;
+  end;
+
+implementation
+
+uses
+  ColumnListOptionPart, Classes;
+
+{ TEvent_ColumnListPart }
+
+procedure TEvent_ColumnListPart.BtnAllSelect_OnClick(sender: TObject);
+begin
+  SetCheckAllItems( true );
+end;
+
+procedure TEvent_ColumnListPart.BtnClear_OnClick(sender: TObject);
+begin
+  SetCheckAllItems( false );
+end;
+
+constructor TEvent_ColumnListPart.Create(owner: TExpander);
+begin
+  inherited;
+  FListBox := TListBox( FExpander.FindComponent( ITEM_NAME_COLUMN_LISTBOX ) );
+  FBtnAllSelect = TButton( FExpander.FindComponent( ITEM_NAME_COLUMN_ALLSEL ) );
+  FBtnClear = TButton( FExpander.FindComponent( ITEM_NAME_COLUMN_CLEAR ) );
+
+  FBtnAllSelect.OnClick := BtnAllSelect_OnClick;
+  FBtnClear.OnClick := BtnClear_OnClick;
+
+  FListBox.Clear;
+end;
+
+destructor TEvent_ColumnListPart.Destroy;
+begin
+  FExpander.DestroyComponents;
+  inherited;
+end;
+
+function TEvent_ColumnListPart.GetButton(owner: TFmxObject): TButton;
+var
+  btn: TButton;
+begin
+  btn := TButton.Create( owner );
+  btn.Width := EXPANDER_CHILD_ITEM_WIDTH;
+  btn.Align := TAlignLayout.alLeft;
+  btn.Parent := owner;
+
+  result := btn;
+end;
+
+function TEvent_ColumnListPart.GetSearchOptionPart: ISearchOptionPart;
+var
+  optPart: TColumnListOptionPart;
+  sList: TStringList;
+  i: Integer;
+begin
+  optPart := TColumnListOptionPart.Create;
+  sList := TStringList.Create;
+
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    if FListBox.ItemByIndex( i ).IsChecked = true then
+      sList.Add( FListBox.ItemByIndex( i ).Text );
+  end;
+
+  optPart.SetUse( IsUse );
+  optPart.SetColumnList( sList );
+
+  result := optPart;
+end;
+
+procedure TEvent_ColumnListPart.SetCheckAllItems(val: Boolean);
+var
+  btn: TButton;
+  i: Integer;
+begin
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    FListBox.ItemByIndex( i ).IsChecked := val;
+  end;
+end;
+
+end.

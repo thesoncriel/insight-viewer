@@ -1,0 +1,94 @@
+select * from haha;::::unavailable database
+Unsuccessful execution caused by an unavailable resource.
+Error Code: 55
+unsupported on-disk structure for file d:\theson.fdb; found 32779, support 10
+wrong or obsolete version
+
+Error Code: 59
+select * from haha;::::unsupported on-disk structure for file d:\theson.fdb; found 32779, support 10
+wrong or obsolete version
+
+Error Code: 59
+unsupported on-disk structure for file D:\theson.fdb; found 32779, support 10
+wrong or obsolete version
+
+Error Code: 59
+bad parameters on attach or create database
+CHARACTER SET WIN1251 is not defined
+can't format message 13:76 -- message file D:\D:\00Source\Delphi\InsightViewer_Renewal\bin\firebird.msg not found
+Error Code: 5
+select * from haha;::::bad parameters on attach or create database
+CHARACTER SET WIN1251 is not defined
+can't format message 13:76 -- message file D:\D:\00Source\Delphi\InsightViewer_Renewal\bin\firebird.msg not found
+Error Code: 5
+
+           select datetime, (division || actor || action || alarmmessage) as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, (division || actor || action || alarmmessage) as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, ([action] || [alarmmessage]) as msg from alarmlog;
+        ::::Dynamic SQL ErrorSQL error code = -104Token unknown - line 2, column 30[
+
+           select datetime, action || alarmmessage as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, action || ' ' || alarmmessage as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, '-' || alarmmessage as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, '-' | alarmmessage as msg from alarmlog;
+        ::::Dynamic SQL ErrorSQL error code = -104Token unknown - line 2, column 33|
+
+           select datetime, '-' || alarmmessage as msg from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, '-' | | alarmmessage as msg from alarmlog;
+        ::::Dynamic SQL ErrorSQL error code = -104Token unknown - line 2, column 33|
+
+           select datetime, '-' + alarmmessage as msg from alarmlog;
+        ::::Dynamic SQL Errorexpression evaluation not supportedStrings cannot be added or subtracted in dialect 3
+
+           select datetime, '-' ||
+        ::::Dynamic SQL ErrorSQL error code = -104Unexpected end of command - line 2, column 33
+
+           select datetime, '-' || alarmmessage 
+        ::::Dynamic SQL ErrorSQL error code = -104Unexpected end of command - line 2, column 36
+
+           select datetime, '-' || alarmmessage as msg from alarmlog
+        ::::CHARACTER SET WIN1251 is not installed
+
+           select datetime, '-' || alarmmessage from alarmlog;
+        ::::CHARACTER SET WIN1251 is not installed
+  select datetime, '-' || alarmmessage from alarmlog;  ::::CHARACTER SET WIN1251 is not installed
+  select datetime, '-' || alarmmessage from alarmlog;  ::::CHARACTER SET WIN1251 is not installed
+  
+			select '-' || alarmmessage from alarmlog;  
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select alarmmessage as _msg from alarmlog;  
+		::::Dynamic SQL ErrorSQL error code = -104Token unknown - line 2, column 27_msg
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_ from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_วั from alarmlog;
+		::::Dynamic SQL ErrorSQL error code = -104Token unknown - line 2, column 74?
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_d from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_d from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_d from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select datetime, (division || actor || action || alarmmessage) as msg_d from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed
+  
+			select datetime, (division||actor) as msg_d from alarmlog;
+		::::CHARACTER SET WIN1251 is not installed

@@ -1,0 +1,53 @@
+unit DataFileSaver;
+
+interface
+
+uses
+  DB, Classes;
+
+type
+
+  IDataSetIterator = Interface(IInterface)
+      function MoveNext(): Boolean;
+      function Current(): TDataSet;
+      function CurName(): String;
+      function Count(): Integer;
+      procedure First;
+  End;
+
+
+  TAbsFileSaver = class(TObject)
+    public
+      function SaveTo(data: TDataSet; filePath: String): Boolean; overload; virtual; abstract;
+      function SaveTo(dataIter: IDataSetIterator; dirPath: String): Integer; overload; virtual; abstract;
+  end;
+
+  TCsvSaver = class(TAbsFileSaver)
+    public
+      function SaveTo(data: TDataSet; filePath: String): Boolean; overload;
+      function SaveTo(dataIter: IDataSetIterator; dirPath: String): Integer; overload;
+  end;
+
+
+
+implementation
+
+uses
+  System.SysUtils, Windows;
+
+
+
+
+{ TCsvSaver }
+
+function TCsvSaver.SaveTo(data: TDataSet; filePath: String): Boolean;
+begin
+  result := true;
+end;
+
+function TCsvSaver.SaveTo(dataIter: IDataSetIterator; dirPath: String): Integer;
+begin
+  result := true;
+end;
+
+end.

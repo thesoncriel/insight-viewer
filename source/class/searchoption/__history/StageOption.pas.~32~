@@ -1,0 +1,77 @@
+unit StageOption;
+
+interface
+
+uses
+  SearchOption, SearchOption_Intf;
+
+type
+
+  TJournalData = class(TInterfacedObject, ILogData)
+    private
+      FDate: String;
+      FMsg: String;
+    public
+      constructor Create(date, msg: String);
+      function GetDate: String;
+      function GetMsg: String;
+  end;
+
+  TStageOption = class(TAbsSearchOptionPart)
+    private
+      FTitle: String;
+      FLogData_Start: ILogData;
+      FLogData_End: ILogData;
+    protected
+//      function GetTitle: String;
+//      procedure SetTitle(val: String);
+//      function GetStart: ILogData;
+//      procedure SetStart(val: ILogData);
+//      function GetEnd: ILogData;
+//      procedure SetEnd(val: ILogData);
+    public
+      constructor Create(searchOpt: TSearchOption);
+      function GetValues(key: String): String;
+      function SetValues(key, val: String);
+
+      property Title: String read FTitle write FTitle;
+      property StartLog: ILogData read FLogData_Start write FLogData_Start;
+      property EndLog: ILogData read FLogData_End write FLogData_End;
+//      property Title: String read GetTitle write SetTitle;
+//      property StartLog: ILogData read GetStart write SetStart;
+//      property EndLog: ILogData read GetEnd write SetEnd;
+  end;
+
+implementation
+
+{ TJournalData }
+
+constructor TJournalData.Create(date, msg: String);
+begin
+  FDate := date;
+  FMsg := msg;
+end;
+
+function TJournalData.GetDate: String;
+begin
+  result := FDate;
+end;
+
+function TJournalData.GetMsg: String;
+begin
+  result := FMsg;
+end;
+
+{ TStageOption }
+
+function TStageOption.GetValues(key: String): String;
+begin
+  inherited;
+  if      key = 'title' then result := FTitle
+  else if key = 'start' then result := FLogData_Start.GetDate
+  else if key = 'end'   then result := FLogData_End.GetDate
+  else    result := '';
+
+end;
+
+end.

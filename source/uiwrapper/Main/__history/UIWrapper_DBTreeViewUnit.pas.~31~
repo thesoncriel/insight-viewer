@@ -1,0 +1,201 @@
+unit UIWrapper_DBTreeViewUnit;
+
+interface
+
+uses
+  FMX.TreeView, DBManager, SearchResult, SearchOption, DataFileSaver;
+
+type
+  TBooleanEvent = procedure(Sender: TObject; val: Boolean) of object;
+
+  TUIWrapper_DBTreeView = class(TObject)
+    private
+      FDBManager: TAbsDBManager;
+      FTreeView: TTreeView;
+
+      FOnAfterSearch: TSearchResultEvent;
+      FOnFoundLogMsgData: TBooleanEvent;
+      procedure OnAfterSearch_Proc(schResult: IDataSetIterator);
+      procedure OnFoundLogMsgData_Proc(val: Boolean);
+    protected
+      function AddChild(childText: String): TTreeViewItem;
+      procedure AddChildOfChild(child: TTreeViewItem; childText: String);
+      function IsEventLog(tableName: String): Boolean;
+      function HasParentItem(listItem: TTreeViewItem): Boolean;
+
+      procedure TreeView_OnDblClick(Sender: TObject);
+    public
+      constructor Create(treeView: TTreeView);
+      destructor Destroy; override;
+      procedure AddDBFileInfo(filePath: String);
+      procedure RemoveDBFileInfo(fileName: String);
+      procedure SetDBManager(dbm: TAbsDBManager); virtual;
+      procedure ShowSearchOption;
+    published
+      property OnAfterSearch: TSearchResultEvent read FOnAfterSearch write FOnAfterSearch;
+      property OnFoundLogMsgData: TBooleanEvent read FOnFoundLogMsgData write FOnFoundLogMsgData;
+  end;
+
+implementation
+
+uses
+  Form_MainUnit, System.SysUtils, System.Classes, Form_SearchOptionUnit,
+  System.UITypes, Const_SearchOptionUnit, SimpleResult;
+
+
+{ TEvent_DBTreeView }
+
+function TUIWrapper_DBTreeView.AddChild(childText: String): TTreeViewItem;
+var
+  child: TTreeViewItem;
+begin
+  child := TTreeViewItem.Create( nil );
+  child.Text := childText;
+
+  //if FTreeView.ChildrenCount <= 0 then
+    FTreeView.AddObject( child );
+  //else
+    //FTreeView.InsertObject( 0, child );
+
+  result := child;
+end;
+
+procedure TUIWrapper_DBTreeView.AddChildOfChild(child: TTreeViewItem;
+  childText: String);
+var
+  childchildItem: TTreeViewItem;
+begin
+  childchildItem := TTreeViewItem.Create( nil );
+  childchildItem.Text := childText;
+  child.AddObject( childchildItem );
+end;
+
+procedure TUIWrapper_DBTreeView.AddDBFileInfo(filePath: String);
+var
+  sRestoreName: string;
+  tvChild: TTreeViewItem;
+  sList_Tables: TStringList;
+  i: Integer;
+begin
+  sRestoreName := ExtractFileName( filePath );
+  sRestoreName := StringReplace( sRestoreName, ExtractFileExt( filePath), '', [rfIgnoreCase] );
+  FDBManager.Restore( filePath, sRestoreName );
+  FDBManager.DBName := sRestoreName;
+  FDBManager.Open;
+
+  tvChild := AddChild( FDBManager.DBName );
+  sList_Tables := FDBManager.GetTableNames;
+
+  for i := 0 to sList_Tables.Count - 1 do
+  begin
+    AddChildOfChild( tvChild, sList_Tables[ i ] );
+  end;
+end;
+
+constructor TUIWrapper_DBTreeView.Create(treeView: TTreeView);
+begin
+  FTreeView := treeView;
+  FTreeView.OnDblClick := TreeView_OnDblClick;
+end;
+
+destructor TUIWrapper_DBTreeView.Destroy;
+begin
+  FDBManager.Free;
+  //FSearchOption.Free;
+end;
+
+function TUIWrapper_DBTreeView.HasParentItem(listItem: TTreeViewItem): Boolean;
+begin
+  if listItem.ParentItem <> nil then
+    result := true
+  else
+    result := false;
+end;
+
+function TUIWrapper_DBTreeView.IsEventLog(tableName: String): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High( EVENT_LOG_TABLE ) do
+  begin
+    if LowerCase( tableName ) = EVENT_LOG_TABLE[ i ] then
+    begin
+      result := true; exit;
+    end;
+  end;
+
+  result := false;
+end;
+
+procedure TUIWrapper_DBTreeView.OnAfterSearch_Proc(schResult: IDataSetIterator);
+begin
+  if Assigned( OnAfterSearch ) = true then
+    OnAfterSearch( self, schResult );
+end;
+
+procedure TUIWrapper_DBTreeView.OnFoundLogMsgData_Proc(val: Boolean);
+begin
+  if Assigned( OnFoundLogMsgData ) = true then
+    OnFoundLogMsgData( self, val );
+end;
+
+procedure TUIWrapper_DBTreeView.RemoveDBFileInfo(fileName: String);
+var
+  child: TTreeViewItem;
+  i: Integer;
+begin
+  for i := 0 to FTreeView.Count - 1 do
+  begin
+    child := FTreeView.Items[ i ];
+
+    if child.Text = fileName then
+    begin
+      FTreeView.RemoveObject( child );
+      FDBManager.DropDB( fileName );
+      exit;
+    end;
+  end;
+end;
+
+procedure TUIWrapper_DBTreeView.SetDBManager(dbm: TAbsDBManager);
+begin
+  FDBManager := dbm;
+end;
+
+procedure TUIWrapper_DBTreeView.ShowSearchOption;
+var
+  modalRet: Integer;
+  sTableName: String;
+begin
+  if HasParentItem( FTreeView.Selected ) = false then
+  begin
+    FTreeView.Selected.IsExpanded := not FTreeView.Selected.IsExpanded;
+    exit;
+  end;
+
+  FDBManager.DBName := FTreeView.Selected.ParentItem.Text;
+  sTableName := FtreeView.Selected.Text;
+
+  if IsEventLog( sTableName ) = true then
+  begin
+    OnFoundLogMsgData_Proc( true );
+    OnAfterSearch_Proc( TSimpleResult.Create( sTableName, FDBManager ) );
+  end
+  else
+  begin
+    modalRet := Form_SearchOption.ShowModalWithInitItems( sTableName, FDBManager );
+
+    if modalRet = mrOK then
+    begin
+      OnFoundLogMsgData_Proc( not Form_SearchOption.IsDateTimeSplit );
+      OnAfterSearch_Proc( Form_SearchOption.GetSearchResult );
+    end;
+  end;
+end;
+
+procedure TUIWrapper_DBTreeView.TreeView_OnDblClick(Sender: TObject);
+begin
+  ShowSearchOption;
+end;
+
+end.

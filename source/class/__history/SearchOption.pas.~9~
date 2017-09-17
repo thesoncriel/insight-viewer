@@ -1,0 +1,52 @@
+unit SearchOption;
+
+interface
+
+uses
+  DCL_intf;
+
+type
+  ISearchOptionPart = interface(IInterface)
+    function GetQueryPart: String;
+    function IsUse: Boolean;
+  end;
+
+  TColumnOption = class(TObject, ISearchOptionPart)
+    public
+      function GetQueryPart: String;
+      function IsUse: Boolean;
+  end;
+
+  TRoundOption = class(TObject, ISearchOptionPart)
+
+  end;
+
+  TGroupOption = class(TObject, ISearchOptionPart)
+
+  end;
+
+  TStageOptionList = class(Tobject)
+
+  end;
+
+  TSearchOption = class(TObject)
+    private
+      FOptHash: IStrMap;
+      FTableName: String;
+      FStageOptionList: TStageOptionList;
+    protected
+
+    public
+      function GetOption(key: String): ISearchOptionPart;
+      function AddOption(key: String; opt: ISearchOptionPart);
+      function RemoveOption(key: String);
+      function Count: Integer;
+
+      property TableName: String read FTableName write FTableName;
+      property Options[key: String]: ISearchOptionPart read GetOption;
+      property Stage[index: Integer]: TStageOptionList read FStageOptionList write FStageOptionList;
+  end;
+
+implementation
+
+end.

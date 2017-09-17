@@ -1,0 +1,22 @@
+unit Event_SchOpt_StageUnit;
+
+interface
+
+uses
+  Event_SchOpt_SchOptPartUnit, SearchOption_Intf;
+
+type
+  TEvent_SchOpt_Stage = class(TEvent_AbsSearchOptionPart)
+    public
+      function GetSearchOptionPart: ISearchOptionPart; override;
+  end;
+implementation
+
+{ TEvent_SchOpt_Stage }
+
+function TEvent_SchOpt_Stage.GetSearchOptionPart: ISearchOptionPart;
+begin
+
+end;
+
+end.

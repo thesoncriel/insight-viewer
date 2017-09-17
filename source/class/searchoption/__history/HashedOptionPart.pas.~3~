@@ -1,0 +1,55 @@
+unit HashedOptionPart;
+
+interface
+
+uses
+  Classes, DCL_intf, SearchOption_Intf;
+
+type
+  THashedOptionPart = class(TAbsSearchOptionPart)
+    protected
+      FHashMap: IStrMap;
+    public
+      constructor Create; virtual;
+      destructor Destroy;
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+      property Items[key: String]: String read GetValues write SetValues;
+  end;
+
+implementation
+
+uses
+  HashMap, System.SysUtils, QueryReader;
+
+{ THashedOptionPart }
+
+constructor THashedOptionPart.Create;
+begin
+  FHashMap := TStrHashMap.Create;
+  FUse := false;
+end;
+
+destructor THashedOptionPart.Destroy;
+begin
+  FHashMap.Clear;
+  FHashMap._Release;
+  inherited;
+end;
+
+function THashedOptionPart.GetValues(key: String): String;
+begin
+  if key = 'use' then
+    result := BoolToStr( FUse )
+  else
+    result := GetValues( key );
+end;
+
+procedure THashedOptionPart.SetValues(key: String; val: String);
+begin
+  FHashMap.PutValue( key, TObject( val ) );
+end;
+
+
+
+end.

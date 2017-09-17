@@ -1,0 +1,14 @@
+unit UIWappedSearchOptionPartUnit;
+
+interface
+
+uses
+  SearchOption_Intf;
+
+  TUIWrappedSearchOptionPart = class(TAbsSearchOptionPart)
+    public
+      function IsUse: Boolean; override;
+  end;
+implementation
+
+end.

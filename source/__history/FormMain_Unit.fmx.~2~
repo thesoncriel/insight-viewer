@@ -1,0 +1,142 @@
+object FormMain: TFormMain
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Component Test'
+  ClientHeight = 400
+  ClientWidth = 600
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object TreeView1: TTreeView
+    Position.Point = '(24,32)'
+    Width = 161.000000000000000000
+    Height = 233.000000000000000000
+    TabOrder = 5
+    object TreeViewItem1: TTreeViewItem
+      Width = 159.000000000000000000
+      Height = 19.000000000000000000
+      HitTest = False
+      TabOrder = 0
+      IsChecked = False
+      IsExpanded = False
+      IsSelected = False
+      Text = 'TreeViewItem1'
+      object TreeViewItem2: TTreeViewItem
+        Position.Point = '(5000,5000)'
+        Width = 50.000000000000000000
+        Height = 19.000000000000000000
+        HitTest = False
+        Visible = False
+        TabOrder = 0
+        IsChecked = False
+        IsExpanded = False
+        IsSelected = False
+        Text = 'TreeViewItem2'
+      end
+      object TreeViewItem3: TTreeViewItem
+        Position.Point = '(5000,5000)'
+        Width = 50.000000000000000000
+        Height = 19.000000000000000000
+        HitTest = False
+        Visible = False
+        TabOrder = 1
+        IsChecked = False
+        IsExpanded = False
+        IsSelected = False
+        Text = 'TreeViewItem3'
+      end
+    end
+    object TreeViewItem4: TTreeViewItem
+      Position.Point = '(0,19)'
+      Width = 159.000000000000000000
+      Height = 19.000000000000000000
+      HitTest = False
+      TabOrder = 1
+      IsChecked = False
+      IsExpanded = False
+      IsSelected = False
+      Text = 'TreeViewItem4'
+      object TreeViewItem5: TTreeViewItem
+        Position.Point = '(5000,5000)'
+        Width = 50.000000000000000000
+        Height = 19.000000000000000000
+        HitTest = False
+        TabOrder = 0
+        IsChecked = False
+        IsExpanded = False
+        IsSelected = False
+        Text = 'TreeViewItem5'
+      end
+      object TreeViewItem6: TTreeViewItem
+        Position.Point = '(5000,5000)'
+        Width = 50.000000000000000000
+        Height = 19.000000000000000000
+        HitTest = False
+        TabOrder = 1
+        IsChecked = False
+        IsExpanded = False
+        IsSelected = False
+        Text = 'TreeViewItem6'
+      end
+    end
+  end
+  object ADOConnection1: TADOConnection
+    ConnectionString = 
+      'Provider=Microsoft.SQLSERVER.CE.OLEDB.3.5;DataSource=d:\\MyDatab' +
+      'ase1.sdf'
+    LoginPrompt = False
+    Mode = cmReadWrite
+    Provider = 'Microsoft.SQLSERVER.CE.OLEDB.3.5'
+    Left = 328
+    Top = 112
+  end
+  object SQLConnection1: TSQLConnection
+    DriverName = 'Firebird'
+    GetDriverFunc = 'getSQLDriverINTERBASE'
+    LibraryName = 'dbxfb.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'DriverUnit=Data.DBXFirebird'
+      
+        'DriverPackageLoader=TDBXDynalinkDriverLoader,DbxCommonDriver160.' +
+        'bpl'
+      
+        'DriverAssemblyLoader=Borland.Data.TDBXDynalinkDriverLoader,Borla' +
+        'nd.Data.DbxCommonDriver,Version=16.0.0.0,Culture=neutral,PublicK' +
+        'eyToken=91d62ebb5b0d1b1b'
+      
+        'MetaDataPackageLoader=TDBXFirebirdMetaDataCommandFactory,DbxFire' +
+        'birdDriver160.bpl'
+      
+        'MetaDataAssemblyLoader=Borland.Data.TDBXFirebirdMetaDataCommandF' +
+        'actory,Borland.Data.DbxFirebirdDriver,Version=16.0.0.0,Culture=n' +
+        'eutral,PublicKeyToken=91d62ebb5b0d1b1b'
+      'GetDriverFunc=getSQLDriverINTERBASE'
+      'LibraryName=dbxfb.dll'
+      'LibraryNameOsx=libsqlfb.dylib'
+      'VendorLib=fbclient.dll'
+      'VendorLibWin64=fbclient.dll'
+      'VendorLibOsx=/Library/Frameworks/Firebird.framework/Firebird'
+      'Database=database.fdb'
+      'Role=RoleName'
+      'MaxBlobSize=-1'
+      'LocaleCode=0000'
+      'IsolationLevel=ReadCommitted'
+      'SQLDialect=3'
+      'CommitRetain=False'
+      'WaitOnLocks=True'
+      'TrimChar=False'
+      'BlobSize=-1'
+      'ErrorResourceFile='
+      'RoleName=RoleName'
+      'ServerCharSet=d:\'
+      'Trim Char=False'
+      'User_Name=sysdba'
+      'Password=1234')
+    TableScope = [tsSynonym, tsSysTable, tsTable, tsView]
+    VendorLib = 'fbclient.dll'
+    Left = 424
+    Top = 200
+  end
+end

@@ -1,0 +1,87 @@
+unit DatetimeOption;
+
+interface
+uses
+  SearchOptionPart, SearchOption, SysUtils, QueryReader;
+
+type
+  TDatetimeOption = class(TSearchOptionPart)
+    private
+      FQueryReader: TQueryReader;
+    protected
+      function GetSplit: String;
+      procedure SetSplit(val: String);
+    public
+      constructor Create(searchOpt: TSearchOption); override;
+      destructor Destroy; override;
+      function GetQueryPart: String;
+      function IsUse: Boolean; override;
+      procedure SetParentOpt(searchOpt: TSearchOption); override;
+
+      property Split: String read GetSplit write SetSplit;
+  end;
+
+implementation
+
+{ TDatetimeOption }
+
+constructor TDatetimeOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  SetParentOpt( searchOpt );
+  Items[ 'split' ] := 'false';
+end;
+
+destructor TDatetimeOption.Destroy;
+begin
+  FQueryReader.Free;
+  inherited;
+end;
+
+function TDatetimeOption.GetQueryPart: String;
+var
+  sQueryPart: String;
+  sSplit: Boolean;
+  sDateCol: String;
+  sTimeUnit: String;
+  sSeveral: String;
+  sRet: String;
+begin
+  sQueryPart := '';
+  sSplit := '';
+  if StrToBool( Split ) = true then
+    sSplit := '.split';
+
+  sDateCol := FSearchOpt.Values[ 'columns', 'datecol' ];
+  sTimeUnit := FSearchOpt.Values[ 'group', 'timeunit' ];
+  sSeveral := FSearchOpt.Values[ 'group', 'several' ];
+
+  if IsUse = true then
+  begin
+    sRet := FQueryReader.GetAndMixQuery( 'resultpart.date.' + sTimeUnit + sSplit, [sDateCol, sSeveral] );
+  end;
+end;
+
+function TDatetimeOption.GetSplit: String;
+begin
+  Items[ 'split' ];
+end;
+
+function TDatetimeOption.IsUse: Boolean;
+begin
+  result := FUse;
+end;
+
+procedure TDatetimeOption.SetParentOpt(searchOpt: TSearchOption);
+begin
+  inherited;
+  FreeAndNil( FQueryReader );
+  FQueryReader := TQueryReader.Create( searchOpt.DBMS, 'insightviewer' );
+end;
+
+procedure TDatetimeOption.SetSplit(val: String);
+begin
+  Items[ 'split' ] := val;
+end;
+
+end.

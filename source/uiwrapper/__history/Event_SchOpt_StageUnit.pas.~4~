@@ -1,0 +1,40 @@
+unit Event_SchOpt_StageUnit;
+
+interface
+
+uses
+  Event_SchOpt_SchOptPartUnit, SearchOption_Intf, FMX.Controls;
+
+type
+  TEvent_SchOpt_Stage = class(TEvent_AbsSearchOptionPart)
+    private
+      FChkAutoDetect: TCheckBox;
+    public
+      constructor Create(owner: TExpander; autoDetect: TCheckBox);
+      function GetSearchOptionPart: ISearchOptionPart; override;
+      procedure SetAutoStageDetectionByDBMS(dbmsName: String);
+  end;
+implementation
+
+{ TEvent_SchOpt_Stage }
+
+constructor TEvent_SchOpt_Stage.Create(owner: TExpander; autoDetect: TCheckBox);
+begin
+  Init( owner );
+  FChkAutoDetect := autoDetect;
+end;
+
+function TEvent_SchOpt_Stage.GetSearchOptionPart: ISearchOptionPart;
+begin
+
+end;
+
+procedure TEvent_SchOpt_Stage.SetAutoStageDetectionByDBMS(dbmsName: String);
+begin
+  if dbmsName = 'firebird' then
+  begin
+    FExpander.
+  end;
+end;
+
+end.

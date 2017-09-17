@@ -1,0 +1,187 @@
+unit ColumnListOptionPart;
+
+interface
+
+uses
+  Classes, SearchOption_Intf, FMX.ListBox, FMX.Controls;
+
+type
+  TColumnsOptionPart = class(TAbsSearchOptionPart)
+    private
+      FListBox: TListBox;
+      FBtnAllSelect: TButton;
+      FBtnClear: TButton;
+    protected
+      FDBMSName: String;
+      FColumns: TStringList;
+      FDatetimeColumn: String;
+      FNormalQuery: String;
+      FGroupQuery: String;
+      procedure SetTemplateQuery;
+      function GetItems(index: Integer): String;
+      function StringComp(str1, str2: String): Boolean;
+      function DistinctDatetime(cols: TStringList): TStringList;
+    public
+      //constructor Create(dbmsName: String); overload;
+      constructor Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+      procedure SetDatetimeColumn(col: String);
+      procedure SetColumns(cols: TStringList);
+      function GetColumns: TStringList;
+      function InsertPartToQuery(tagQuery, key: String; currIndex: Integer): String; override;
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+
+      property Items[index: Integer]: String read GetItems;
+  end;
+implementation
+
+uses
+  SysUtils, QueryReader, Const_SearchOptionUnit;
+
+{ TColumnListOptionPart }
+
+constructor TColumnsOptionPart.Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+begin
+  Create;
+  FDBMSName := dbmsName;
+  SetTemplateQuery;
+end;
+
+constructor TColumnsOptionPart.Create;
+begin
+  inherited;
+  FDBMSName := 'common';
+  SetTemplateQuery;
+end;
+
+
+function TColumnsOptionPart.GetColumns: TStringList;
+begin
+  result := FColumns;
+end;
+
+function TColumnsOptionPart.GetItems(index: Integer): String;
+begin
+  result := FColumns[ index ];
+end;
+
+function TColumnsOptionPart.GetValues(key: String): String;
+begin
+  if FColumns = Nil then exit;
+
+  result := FColumns[ StrToInt( key ) ];
+end;
+
+function TColumnsOptionPart.InsertPartToQuery(tagQuery, key: String;
+  currIndex: Integer): String;
+var
+  sbQuery: TStringBuilder;
+  sTempCols: String;
+  sAppendedCols: String;
+  i: Integer;
+begin
+  sbQuery := TStringBuilder.Create;
+
+  if key = 'normal' then
+    sTempCols := FNormalQuery
+  else if key = 'group' then
+    sTempCols := FGroupQuery;
+
+  if key = 'datetime' then
+  begin
+    sAppendedCols := FDatetimeColumn;
+  end
+  else
+  begin
+    for i := 0 to FColumns.Count - 1 do
+    begin
+      sbQuery.Append(
+        StringReplace( sTempCols, '{0}', FColumns[ i ], [ rfReplaceAll, rfIgnoreCase ] ) );
+    end;
+
+    sAppendedCols :=  sbQuery.ToString;
+  end;
+  result := StringReplace( tagQuery, '{0}', sAppendedCols, [ rfReplaceAll, rfIgnoreCase ] );
+end;
+
+procedure TColumnsOptionPart.SetColumns(cols: TStringList);
+begin
+  //FColumns := cols;
+  FColumns := DistinctDatetime( cols );
+end;
+
+procedure TColumnsOptionPart.SetDatetimeColumn(col: String);
+begin
+  FDatetimeColumn := col;
+end;
+
+procedure TColumnsOptionPart.SetTemplateQuery;
+var
+  queryReader: TQueryReader;
+begin
+  queryReader := TQueryReader.Create( FDBMSName, 'insightviewer' );
+  FNormalQuery := queryReader.GetQuery( 'template.column.normal' );
+  FGroupQuery := queryReader.GetQuery( 'template.column.group' );
+  queryReader.Free;
+end;
+
+procedure TColumnsOptionPart.SetValues(key, val: String);
+var
+  iKey: Integer;
+begin
+  if key = 'dbms' then
+  begin
+    FDBMSName := val; exit;
+  end;
+
+  if FColumns = Nil then FColumns := TStringList.Create;
+
+  iKey := StrToInt( key );
+
+  if FColumns.Count <= iKey then exit;
+
+  if ( FColumns.Count = 0 ) and ( iKey = 0 ) then FColumns.Add( val )
+  else FColumns.Add( val );
+end;
+
+function TColumnsOptionPart.StringComp(str1, str2: String): Boolean;
+var
+  pWideChar1, pWideChar2: PWideChar;
+begin
+  pWideChar1 := @str1;
+  pWideChar1 := @str2;
+
+  result := StrComp( pWideChar1, pWideChar2 ) > 0;
+end;
+
+function TColumnsOptionPart.DistinctDatetime(cols: TStringList): TStringList;
+var
+  i, j: Integer;
+  isMatch: Boolean;
+  sList: TStringList;
+begin
+  isMatch := false;
+  sList := TStringList.Create;
+  FDatetimeColumn := '';
+
+  for i := 0 to cols.Count - 1 do
+  begin
+    for j := 0 to High( DATETIME_COLUMN_PATTERN ) do
+    begin
+      if ( StringComp( LowerCase( cols[ i ] ), DATETIME_COLUMN_PATTERN[ j ] ) = true ) then
+      begin
+        isMatch := true;
+      end
+      else isMatch := isMatch or false;
+    end;
+
+    if ( FDatetimeColumn = '' ) and ( isMatch = true ) then
+      FDatetimeColumn := cols[ i ]
+    else {if isMatch = false then}
+      sList.Add( cols[ i ] );
+  end;
+
+  result := sList;
+end;
+
+end.

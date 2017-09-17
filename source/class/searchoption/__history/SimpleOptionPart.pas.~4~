@@ -1,0 +1,31 @@
+unit SimpleOptionPart;
+
+interface
+
+uses
+  SearchOption_Intf;
+
+type
+  TSimpleOptionPart = class(TAbsSearchOptionPart)
+    protected
+      FValue: String;
+    public
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+  end;
+
+implementation
+
+{ TSimpleOptionPart }
+
+function TSimpleOptionPart.GetValues(key: String): String;
+begin
+  result := FValue;
+end;
+
+procedure TSimpleOptionPart.SetValues(key, val: String);
+begin
+  FValue := val;
+end;
+
+end.

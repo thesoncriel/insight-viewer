@@ -1,0 +1,50 @@
+unit UIWrapper_DatetimeUnit;
+
+interface
+
+uses
+  UIWrapper_SchOptPartUnit, SearchOption_Intf, FMX.Controls;
+
+type
+  TUIWrapper_Datetime = class(TUIWrapper_AbsSearchOptionPart)
+    public
+      constructor Create(owner: TExpander); override;
+      destructor Destroy; override;
+      function GetSearchOptionPart: ISearchOptionPart; override;
+  end;
+
+implementation
+
+uses
+  SimpleOptionPart, HashedOptionPart;
+
+{ TEvent_SchOpt_Datetime }
+
+
+function TUIWrapper_Datetime.GetSearchOptionPart: ISearchOptionPart;
+var
+  schOpt: THashedOptionPart;
+begin
+  inherited;
+  schOpt := THashedOptionPart.Create;
+  schOpt.SetUse( FExpander.IsChecked );
+  schOpt.SetValues( 'split', IsUseToString );
+  schOpt.Free;
+  result := nil;
+
+end;
+
+constructor TUIWrapper_Datetime.Create(owner: TExpander);
+begin
+  Init( owner );
+end;
+
+destructor TUIWrapper_Datetime.Destroy;
+begin
+
+  inherited;
+end;
+
+
+
+end.

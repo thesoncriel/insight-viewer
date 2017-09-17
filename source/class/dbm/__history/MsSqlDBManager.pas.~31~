@@ -1,0 +1,429 @@
+unit MsSqlDBManager;
+
+interface
+
+uses
+  Classes, iniFiles, DB, Variants, HashMap, DCL_intf, ADODB, StrUtils,
+  SysUtils, DBManager, DBTables, QueryReader, Data.SqlExpr;
+
+const
+  MSSQL_SQL_CREATE = 'if db_id(''%s'') is null begin create database %s end;';
+  MSSQL_SQL_DROP = 'drop database %s;';
+  MSSQL_SQL_BACKUP = 'backup database %s to disk = ''%s'' with init';
+  MSSQL_SQL_DBLIST = 'select name FROM sys.databases;';
+  MSSQL_DBFILE_FOLDER_X64 = 'C:\Program Files (x86)\Microsoft SQL Server\MSSQL.1\MSSQL\Data';
+  MSSQL_DBFILE_FOLDER_X86 = 'C:\Program Files\Microsoft SQL Server\MSSQL.1\MSSQL\Data';
+type
+//-----------------------------------------------------------------+
+// 클래스명:    TMsSqlDBManager
+// 주요역할:    MS-SQL Server를 관리 하기 위한 클래스 이다.
+//    기본적으로 localhost이며 id및 pw가 설정되어 있지 않은 곳에서 쓰인다.
+//-----------------------------------------------------------------+
+  TMsSqlDBManager = Class(TAbsDBServer)
+    private
+      FConnect: TADOConnection;
+      FQuery: TADOQuery;
+    protected
+      function GetLogicalDBName(filePath: String): String;
+      function GetLocalDBLocation(): String;
+    public
+      Constructor Create();
+      Destructor Destroy(); override;
+      procedure SetTableNames(); override;
+      procedure SetColumnNames(); override;
+      function ExecuteQuery(query: String): TDataSet; override;
+      function ExecuteNonQuery(query: String): Integer; override;
+      function Backup(backupPath: String): Boolean; override;
+      function Open(): Boolean; override;
+      function IsOpen(): Boolean; override;
+      procedure Close(); override;
+      function Restore(filePath, RestoreName: String): Boolean; override;
+      function CreateDB(DBName: String): Boolean; override;
+      function DropDB(DbName: String): Boolean; override;
+      function GetDBList(isFilter: Boolean): TStringList; override;
+      function ClearTrash(wantQuery, issueDBName, restoreFileName: String): Boolean;
+      function Login(id, pw, defDB, addr: String): Boolean; override;
+      function GetDBMSName: String; override;
+  end;
+
+implementation
+
+
+{ TMsSqlDBManager }
+
+//-----------------------------------------------------------------+
+// 지정한 경로에 DB를 백업 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.Backup(backupPath: String): Boolean;
+begin
+  if FileExists( backupPath ) = true then
+    DeleteFile( backupPath );
+  try
+    ExecuteNonQuery( Format( MSSQL_SQL_BACKUP, [DBName, backupPath] ) );
+    result := true;
+  except
+    on e: Exception
+    do WriteErrorMessage( e.Message );
+  end;
+  result := false;
+end;
+
+//-----------------------------------------------------------------+
+// DB 복원시 발생된 예외를 처리 한다.
+// 복원 하려는 DB가 이미 존재할 경우 Drop 시키고,
+// Drop시 오류가 날 경우 DB가 존재하지 않기에 복원 경로에 문제가 있다고 판단,
+// 같은 경로내 관련된 DB 파일들을 모두 삭제 하고 DB를 재 복원 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.ClearTrash(wantQuery, issueDBName, restoreFileName:
+    String): Boolean;
+begin
+  try
+    ExecuteNonQuery( 'use master drop database ' + issueDBName );
+  except
+    try
+      DeleteFile( restoreFileName + '.mdf' );
+      DeleteFile( restoreFileName + '_Log.log' );
+      DeleteFile( restoreFileName + '_Log.LDF' );
+      ExecuteNonQuery( wantQuery );
+      result := true;
+    except
+      on e: Exception
+      do
+      begin
+        WriteErrorMessage( e.Message );
+        result := false;
+      end;
+    end;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 열려진 DB를 닫는다.
+//-----------------------------------------------------------------+
+procedure TMsSqlDBManager.Close;
+begin
+  inherited;
+  FConnect.Close;
+  FQuery.Close;
+end;
+
+//-----------------------------------------------------------------+
+// 생성자. 내부 맴버를 생성하고 초기화 한다.
+//-----------------------------------------------------------------+
+constructor TMsSqlDBManager.Create;
+begin
+  FConnStr := DEFAULT_MSSQL_CONN_STR;
+  FConnect := TADOConnection.Create( nil );
+  FDataSource := TDataSource.Create( nil );
+  FQuery := TADOQuery.Create( nil );
+
+  FConnect.ConnectionString := FConnStr;
+  FConnect.Provider := 'SQLOLEDB';
+  FConnect.LoginPrompt := false;
+  FConnect.Mode := cmReadWrite;
+
+  FQuery.Connection := FConnect;
+end;
+
+//-----------------------------------------------------------------+
+// 지정한 이름으로 DB를 새로 생성 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.CreateDB(DBName: String): Boolean;
+var
+  ret: Integer;
+begin
+  ret := ExecuteNonQuery( Format( MSSQL_SQL_CREATE, [dbName, dbName] ) );
+  result := ret > 0;
+end;
+
+//-----------------------------------------------------------------+
+// 지정된 이름의 DB를 삭제 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.DropDB(DbName: String): Boolean;
+var
+  ret: Integer;
+begin
+  ret := ExecuteNonQuery( Format( MSSQL_SQL_DROP, [DbName] ) );
+  result := ret > -1;
+end;
+
+//-----------------------------------------------------------------+
+// DB파일 (.bak)을 복원 한다.
+// 복원시 내부적으로 예외가 발생할 경우 ClearTrash를 호출하여 예외 처리를 시도 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.Restore(filePath,
+  RestoreName: String): Boolean;
+var
+  sQuery: String;
+  sLogicalName: String;
+  sDirectory: String;
+  sRestoreFileName: String;
+begin
+  sLogicalName := GetLogicalDBName( filePath );
+  sDirectory := GetLocalDBLocation;
+  sRestoreFileName := StringReplace( ExtractFileName( filePath ), '.', '_', [ rfReplaceAll, rfIgnoreCase ] );
+  sQuery := 'use master restore database ' + RestoreName +
+            ' from disk = ''' + filePath + ''' with recovery, ' +
+            'move ''' + sLogicalName + ''' to ''' + sDirectory + '\' + RestoreName + '.mdf'', ' +
+            'move ''' + sLogicalName + '_Log'' to ''' + sDirectory + '\' + RestoreName + '_Log.log'' ';
+  try
+  begin
+    WriteErrorMessage( sQuery );
+    ExecuteNonQuery( sQuery );
+    result := true;
+  end;
+  except
+    on e: Exception
+    do
+    begin
+      result := self.ClearTrash( sQuery, sLogicalName, sDirectory + '\' + RestoreName );
+    end;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 소멸자. 현재 DB 관리자를 메모리에서 제거 한다.
+//-----------------------------------------------------------------+
+destructor TMsSqlDBManager.Destroy;
+begin
+  self.Close;
+  FConnect.Free;
+  FQuery.Close;
+  FDataSource.Free;
+end;
+
+//-----------------------------------------------------------------+
+// Select문을 제외한 모든 쿼리문을 수행 한다.
+// 리턴값이 -1일 경우는 오류가 난 것이다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.ExecuteNonQuery(query: String): Integer;
+begin
+  try
+    if AnsiContainsText( LowerCase( query ), 'use master' ) = false  then
+    query := 'use ' + DBName + ' ' + query;
+
+    FQuery.SQL.Clear;
+    FQuery.SQL.Add( query );
+    result := FQuery.ExecSQL;
+  except
+    on e: Exception
+    do begin
+      WriteErrorMessage( query + '::::' + e.Message );
+      result := -1;
+    end;
+  end;
+
+end;
+
+//-----------------------------------------------------------------+
+// Select문과 같이 검색 결과가 있는 쿼리문을 수행 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.ExecuteQuery(query: String): TDataSet;
+var
+  objQuery: TADOQuery;
+begin
+  try
+    objQuery := TADOQuery.Create( nil );
+    objQuery.Connection := FConnect;
+    
+    if AnsiContainsText( LowerCase( query ), 'use master' ) = false  then
+    query := 'use ' + DBName + ' ' + query;
+
+    objQuery.SQL.Clear;
+    query := StringReplace( query, #$A, ' ', [ rfReplaceAll, rfIgnoreCase ] );
+    query := StringReplace( query, #9, ' ', [ rfReplaceAll, rfIgnoreCase ] );
+
+    objQuery.SQL.Append( query );
+    objQuery.Open;
+
+    result := objQuery;
+  except
+    on e: Exception
+    do begin
+      WriteErrorMessage( query + '::::' + e.Message );
+      result := nil;
+    end;
+  end;
+
+end;
+
+//-----------------------------------------------------------------+
+// 현재 등록된 모든 Database의 이름들을 얻는다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.GetDBList(isFilter: Boolean): TStringList;
+var
+  sQuery: String;
+  sList: TStringList;
+  field: TField;
+  data: TDataSet;
+begin
+  sList := TStringList.Create;
+  sQuery := MSSQL_SQL_DBLIST;
+
+  if isFilter = true then
+  begin
+    sQuery := sQuery + 'where name like ''' + DEFAULT_DB_LIST_FILTER + ''' ';
+  end;
+
+  sQuery := sQuery + 'ORDER BY database_id';
+  data := ExecuteQuery( sQuery );
+
+  while data.Eof = false do
+  begin
+    sList.Add( data.FieldList[0].CurValue )
+  end;
+
+  data.Free;
+  result := sList;
+end;
+
+
+function TMsSqlDBManager.GetDBMSName: String;
+begin
+  result := 'mssql';
+end;
+
+function TMsSqlDBManager.GetLocalDBLocation: String;
+begin
+  if DirectoryExists( MSSQL_DBFILE_FOLDER_X64 ) = true  then
+  begin
+    result := MSSQL_DBFILE_FOLDER_X64;
+  end
+  else
+  begin
+    result := MSSQL_DBFILE_FOLDER_X86;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 지정한 경로의 bak파일에서 실제 DB 이름을 얻는다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.GetLogicalDBName(filePath: String): String;
+var
+  sQuery: String;
+  datasourceTemp: TDataSource;
+  dataset: TDataSet;
+  fieldData: TField;
+  sDBName: String;
+begin
+  datasourceTemp := TDataSource.Create( nil );
+  sQuery := 'restore headeronly from disk = ''' + filePath + ''' ';
+  FQuery.SQL.Clear;
+  FQuery.SQL.Add( sQuery );
+  FQuery.Open;
+  FQuery.ExecSQL;
+  datasourceTemp.DataSet := FQuery;
+  dataset := datasourceTemp.DataSet;
+  fieldData := dataset.FieldByName( 'DatabaseName' );
+  sDBName := fieldData.Value;
+  FreeAndNil( datasourceTemp );
+  result := sDBName;
+end;
+
+//-----------------------------------------------------------------+
+// DB가 열린 상태인지 확인 한다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.IsOpen: Boolean;
+begin
+  result := FConnect.Connected;
+end;
+
+function TMsSqlDBManager.Login(id, pw, defDB, addr: String): Boolean;
+begin
+  if FConnect.Connected = true then FConnect.Connected := false;
+  try
+    FConnect.ConnectionString := Format( SERVER_MSSQL_CONN_STR, [id, pw, defDB, addr] );
+    DBName := defDB;
+    result := true;
+  except
+    on e: Exception
+    do WriteErrorMessage( e.Message );
+  end;
+  result := false;
+end;
+
+//-----------------------------------------------------------------+
+// DB를 연다.
+//-----------------------------------------------------------------+
+function TMsSqlDBManager.Open: Boolean;
+begin
+  try
+
+    if IsOpen = false then
+    begin
+      FConnect.ConnectionString := DEFAULT_MSSQL_CONN_STR;
+      FConnect.Connected := true;
+    end;
+    result := true;
+  except
+    on e: Exception
+    do WriteErrorMessage( e.Message );
+  end;
+  result := false;
+end;
+
+
+//-----------------------------------------------------------------+
+// DB내의 각 Table 이름별 열이름을 설정 한다.
+//-----------------------------------------------------------------+
+procedure TMsSqlDBManager.SetColumnNames;
+var
+  sQuery: String;
+  sCompQuery: String;
+  sTableName: String;
+  enumerator: Classes.TStringsEnumerator;
+  dataset: TDataSet;
+  field: TField;
+  iCnt: Integer;
+  List_Columns: TStringList;
+begin
+  inherited;
+  if FTableNames = nil then self.SetTableNames;
+  FColumnNames := TStrHashMap.Create;
+  sQuery := 'use ' + DBName + ' SELECT COLUMN_NAME as name FROM INFORMATION_SCHEMA.Columns where TABLE_NAME = ''';
+  enumerator := FTableNames.GetEnumerator;
+
+  while enumerator.MoveNext do
+  begin
+    sCompQuery := sQuery + enumerator.Current + ''' ';
+    FQuery.SQL.Clear;
+    FQuery.SQL.Add(sCompQuery);
+    FQuery.Open;
+    dataset := FQuery;
+    field := dataset.FieldByName( 'name' );
+    List_Columns := TStringList.Create;
+
+    for iCnt := 0 to dataset.RecordCount - 1 do
+    begin
+      List_Columns.Add(field.Value);
+      dataset.Next;
+    end;
+    FColumnNames.PutValue(enumerator.Current, List_Columns);
+  end;
+end;
+
+
+//-----------------------------------------------------------------+
+// DB내 모든 Table의 이름을 설정한다.
+//-----------------------------------------------------------------+
+procedure TMsSqlDBManager.SetTableNames;
+var
+  sQuery: String;
+  sCompQuery: String;
+  sTableName: String;
+  field: TField;
+  dataset: TDataSet;
+begin
+  inherited;
+  FTableNames := TStringList.Create;
+
+  sQuery := 'use ' + DBName + ' SELECT name FROM sysobjects WHERE Type = ''U'' ORDER BY name';
+  dataset := ExecuteQuery(sQuery);
+  field := dataset.FieldByName('name');
+  while dataset.Eof = false do
+  begin
+    FTableNames.Add(field.Value);
+    dataset.Next;
+  end;
+end;
+end.

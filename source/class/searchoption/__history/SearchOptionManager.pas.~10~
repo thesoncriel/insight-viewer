@@ -1,0 +1,62 @@
+unit SearchOptionManager;
+
+interface
+
+uses
+  SearchOption, DBManager, SearchResult;
+
+type
+  TSearchOptionManager = class(TSearchOption)
+    private
+      FDBMS: TAbsDBManager;
+    protected
+      function GetDBMSName: String; override;
+      procedure SetDBMSName(dbms: String); override;
+    public
+      procedure SetDBManager(dbm: TAbsDBManager);
+      function GetSearchResult: TSearchResultSet; override;
+  end;
+
+implementation
+
+uses
+  MsSqlDBManager, FireBirdDBManager;
+
+{ TSearchOptionManager }
+
+function TSearchOptionManager.GetDBMSName: String;
+begin
+  if FDBMS <> nil then
+    result := FDBMS.GetDBMSName
+  else
+    result := '';
+end;
+
+function TSearchOptionManager.GetSearchResult: TSearchResultSet;
+var
+  searchResult: TSearchResultSet;
+begin
+  searchResult := TSearchResultSet.Create( self );
+
+  result := searchResult;
+end;
+
+procedure TSearchOptionManager.SetDBManager(dbm: TAbsDBManager);
+begin
+  FDBMS := dbm
+end;
+
+procedure TSearchOptionManager.SetDBMSName(dbms: String);
+begin
+  if FDBMS.GetDBMSName <> dbms then
+  begin
+    FDBMS.Free;
+
+    if dbms = DBMS_MSSQL  then
+      FDBMS := TMsSQLDBManager.Create
+    else if dbms = DBMS_FIREBIRD then
+      FDBMS := TFireBirdDBManager.Create;
+  end;
+end;
+
+end.

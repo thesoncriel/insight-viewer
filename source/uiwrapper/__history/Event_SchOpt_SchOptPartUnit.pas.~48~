@@ -1,0 +1,101 @@
+unit Event_SchOpt_SchOptPartUnit;
+
+interface
+
+uses
+  FMX.Controls, Classes, FMX.Types, iniFiles, SearchOption_Intf, DCL_intf,
+  FMX.ListBox;
+
+const
+  EXPANDER_CHILD_PANEL_HEIGHT = 35;
+  EXPANDER_MARGIN = 5;
+  EXPANDER_CHILD_LABEL_WIDTH = 100;
+  EXPANDER_CHILD_ITEM_WIDTH = 120;
+  EXPANDER_CHILD_LABEL_FONT_SIZE = 15;
+
+type
+  TEvent_AbsSearchOptionPart = class(TObject)
+    private
+      function GetItemValue(key: String): String;
+      procedure SetItemValue(key, val: String);
+    protected
+      FDataHash: IStrMap;
+      FExpander: TExpander;
+      function StrArrayToStrList(strArr: array of String): TStringList;
+      procedure Init(expander: TExpander);
+    public
+      constructor Create(owner: TExpander); virtual;
+      destructor Destroy; override;
+      function IsUse: Boolean;
+      property Items[key: String]: String read GetItemValue write SetItemValue;
+
+      function GetSearchOptionPart: ISearchOptionPart; virtual; abstract;
+  end;
+
+
+
+implementation
+
+uses
+  HashMap, SysUtils, StrOptComponent, HashedOptionPart, ColumnListOptionPart;
+
+{ TEvent_AbsSearchOptionPart }
+
+
+constructor TEvent_AbsSearchOptionPart.Create(owner: TExpander);
+begin
+  Init( owner );
+end;
+
+destructor TEvent_AbsSearchOptionPart.Destroy;
+begin
+  FDataHash.Clear;
+  inherited;
+end;
+
+function TEvent_AbsSearchOptionPart.GetItemValue(key: String): String;
+var
+  intfComp: IStrOptionComponent;
+begin
+  if Supports( FDataHash.GetValue( key ), IStrOptionComponent, intfComp ) = true  then
+  result := intfComp.GetValue;
+end;
+
+procedure TEvent_AbsSearchOptionPart.Init(expander: TExpander);
+begin
+  FExpander := expander;
+  FDataHash := TStrHashMap.Create;
+end;
+
+function TEvent_AbsSearchOptionPart.IsUse: Boolean;
+begin
+  result := ( FExpander.ShowCheck = false ) or
+            ( ( FExpander.ShowCheck = true ) and ( FExpander.IsChecked = true ) );
+end;
+
+procedure TEvent_AbsSearchOptionPart.SetItemValue(key, val: String);
+var
+  intfComp: IStrOptionComponent;
+begin
+  if Supports( FDataHash.GetValue( key ), IStrOptionComponent, intfComp ) = true  then
+  intfComp.SetValue( val );
+end;
+
+
+function TEvent_AbsSearchOptionPart.StrArrayToStrList(
+  strArr: array of String): TStringList;
+var
+  sList: TStringList;
+  i: Integer;
+begin
+  sList := TStringList.Create;
+
+  for i := 0 to High( strArr ) do
+  begin
+    sList.Add( strArr[ i ] );
+  end;
+
+  result := sList;
+end;
+
+end.

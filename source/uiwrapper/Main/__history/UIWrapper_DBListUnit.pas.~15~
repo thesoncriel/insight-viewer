@@ -1,0 +1,81 @@
+unit UIWrapper_DBListUnit;
+
+interface
+
+uses
+  FMX.TabControl, FMX.TreeView, UIWrapper_DBTreeViewUnit, DBManager,
+  SearchResult;
+
+type
+  TUIWrapper_DBList = class(TObject)
+    private
+      FTabControl: TTabControl;
+      FTreeViews: array of TUIWrapper_DBTreeView;
+
+      FOnAfterSearch: TSearchResultEvent;
+      procedure OnAfterSearch_Proc(Sender: TObject; schResult: TSearchResultSet);
+    public
+      constructor Create(tabCtrl: TTabControl; treeViews: array of TTreeView);
+      procedure ChangeTab(index: Integer);
+      procedure PassFileToTab(filePath: String);
+    published
+      property OnAfterSearch: TSearchResultEvent read FOnAfterSearch write FOnAfterSearch;
+  end;
+
+implementation
+
+uses
+  SysUtils, FireBirdDBManager, MsSqlDBManager;
+
+{ TUIWrapper_Main_DBList }
+
+constructor TUIWrapper_DBList.Create(tabCtrl: TTabControl; treeViews: array of TTreeView);
+var
+  i: Integer;
+  dbm: TAbsDBManager;
+begin
+  FTabControl := tabCtrl;
+  SetLength( FTreeViews, Length( treeViews ) );
+
+  FTreeViews[ 0 ] := TUIWrapper_DBTreeView.Create( treeViews[ 0 ] );
+  FTreeViews[ 0 ].SetDBManager( TFireBirdDBManager.Create );
+  FTreeViews[ 0 ].OnAfterSearch := OnAfterSearch_Proc;
+
+  FTreeViews[ 1 ] := TUIWrapper_DBTreeView.Create( treeViews[ 1 ] );
+  FTreeViews[ 1 ].SetDBManager( TMsSqlDBManager.Create );
+  FTreeViews[ 1 ].OnAfterSearch := OnAfterSearch_Proc;
+
+end;
+
+procedure TUIWrapper_DBList.OnAfterSearch_Proc(Sender: TObject; schResult: TSearchResultSet);
+begin
+  if Assigned( OnAfterSearch ) = true then
+    OnAfterSearch( Sender, schResult );
+end;
+
+procedure TUIWrapper_DBList.PassFileToTab(filePath: String);
+var
+  sFileExt: String;
+begin
+  sFileExt := LowerCase( ExtractFileExt( filePath ) );
+
+  if ( sFileExt = '.gdb' ) or ( sFileExt = '.fdb' ) then
+  begin
+    FTreeViews[ 0 ].AddDBFileInfo( filePath );
+    ChangeTab( 0 );
+  end
+  else if sFileExt = '.bak' then
+  begin
+    FTreeViews[ 1 ].AddDBFileInfo( filePath );
+    ChangeTab( 1 );
+  end;
+
+end;
+
+procedure TUIWrapper_DBList.ChangeTab(index: Integer);
+begin
+  FTabControl.TabIndex := index;
+end;
+
+end.
+

@@ -1,0 +1,32 @@
+unit Event_SchOptPart_DatetimeUnit;
+
+interface
+
+uses
+  Event_SchOptPartUnit, SearchOption_Intf;
+
+type
+  TUIWrapperSchOpt_Datetime = class(TEvent_AbsSearchOptionPart)
+    public
+      function GetSearchOptionPart: ISearchOptionPart; override;
+  end;
+
+implementation
+
+uses
+  SimpleOptionPart;
+
+{ TEvent_SchOpt_Datetime }
+
+function TUIWrapperSchOpt_Datetime.GetSearchOptionPart: ISearchOptionPart;
+var
+  schOpt: TSimpleOptionPart;
+begin
+  schOpt := TSimpleOptionPart.Create;
+  schOpt.SetUse( FExpander.IsChecked );
+  schOpt.SetValues( 'split', IsUseToString );
+
+  result := schOpt;
+end;
+
+end.

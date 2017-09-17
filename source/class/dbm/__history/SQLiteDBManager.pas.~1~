@@ -1,0 +1,402 @@
+unit SQLiteDBManager;
+
+interface
+
+uses
+  Classes, iniFiles, DB, Variants, HashMap, DCL_intf, ADODB, Unit_GlobalFunction, StrUtils,
+  SysUtils, DBManager, Uni, UniProvider, SQLiteUniProvider, DBTables;
+
+type
+//-----------------------------------------------------------------+
+// 클래스명:    TSQLiteDBManager
+// 주요역할:    SQLite를 이용하는 DB를 관리 하기 위한 클래스 이다.
+//    개별적으로 dblist.db를 만들어 DB List를 관리할 수 있다.
+//-----------------------------------------------------------------+
+  TSQLiteDBManager = Class(TDBManager)
+    private
+            {
+        FConnect: TASQLite3DB;
+              FConnDBList: TASQLite3DB;
+              FQuery: TASQLite3Query;
+              FQueryDBList: TASQLite3Query;
+      }
+      FConnect: TUniConnection;
+      FConnDBList: TUniConnection;
+      FQuery: TUniQuery;
+      FQueryDBList: TUniQuery;
+      FProvider: TSQLiteUniProvider;
+    protected
+      procedure CreateDBList;
+      procedure OpenDBList;
+      procedure CloseDBList;
+      function GetDBFilePath(dbName: String): String;
+    public
+      constructor Create;
+      Destructor Destroy(); override;
+      procedure SetTableNames(); override;
+      procedure SetColumnNames(); override;
+      function ExecuteQuery(query: String): TDataSet; override;
+      function ExecuteNonQuery(query: String): Integer; override;
+      function Backup(backupPath: String): Boolean; override;
+      function Open(): Boolean; override;
+      function IsOpen(): Boolean; override;
+      procedure Close(); override;
+      function Restore(filePath, RestoreName: String): Boolean; override;
+      function CreateDB(DBName: String): Boolean; override;
+      function DropDB(DbName: String): Boolean; override;
+      function GetDBList(isFilter: Boolean): TDataSet; override;
+      function SetLoginInfo(id, pw, dbName, serverAddress: string): Boolean; override;
+  end;
+
+implementation
+
+
+
+  //DBClient;
+
+{ TSQLiteDBManager }
+
+//-----------------------------------------------------------------+
+// 지정한 경로에 DB를 백업 한다.
+// 
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.Backup(backupPath: String): Boolean;
+var
+  sOldFileName: String;
+begin
+  sOldFileName := GetDBFilePath(DBName);
+  if (sOldFileName <> '') and (FileExists(sOldFileName) = false) then begin
+    raise Exception.Create('DB File is not Exists !!');
+  end
+  else begin
+    if FileExists(backupPath) = true then DeleteFile(backupPath);
+    
+    CopyFile(sOldFileName, backupPath);
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// 열려진 DB를 닫는다.
+//-----------------------------------------------------------------+
+procedure TSQLiteDBManager.Close;
+begin
+  inherited;
+  FConnect.Close;
+  FQuery.Close;
+  FConnDBList.Close;
+  FQueryDBList.Close;
+end;
+
+//-----------------------------------------------------------------+
+// DB List를 닫는다.
+//-----------------------------------------------------------------+
+procedure TSQLiteDBManager.CloseDBList;
+begin
+  FQueryDBList.Close;
+  FConnDBList.Close;
+end;
+
+//-----------------------------------------------------------------+
+// 생성자. 내부 맴버를 생성하고 초기화 한다.
+//-----------------------------------------------------------------+
+constructor TSQLiteDBManager.Create;
+begin
+{
+    FConnect := TASQLite3DB.Create(nil);
+    FConnDBList := TASQLite3DB.Create(nil);
+    FQuery := TASQLite3Query.Create(nil);
+    FQueryDBList := TASQLite3Query.Create(nil);
+    FDataSource := TDataSource.Create(nil);
+  FConnect.DefaultExt := '.db';
+  FConnect.DefaultDir := GetCurrentDir + '\' + DEFAULT_DB_PATH + '\kaka\huhu';
+  FConnDBList.DefaultExt := '.db';
+  FConnDBList.DefaultDir := GetCurrentDir;
+  FConnect.DriverDLL := 'sqlite3.dll';
+  FConnect.DriverDLL := 'sqlite3.dll';
+  CreateAllDir(FConnect.DefaultDir);
+}
+  FProvider := TSQLiteUniProvider.Create(nil);
+
+  FConnect := TUniConnection.Create(nil);
+  FConnDBList := TUniConnection.Create(nil);
+  FQuery := TUniQuery.Create(nil);
+  FQueryDBList := TUniQuery.Create(nil);
+  FDataSource := TDataSource.Create(nil);
+
+  FConnect.ProviderName := 'SQLite';
+  FConnect.LoginPrompt := false;
+  FConnDBList.ProviderName := 'SQLite';
+  FConnDBList.LoginPrompt := false;
+
+  CreateAllDir(GetCurrentDir + '\' + DEFAULT_DB_PATH);
+
+  FQuery.Connection := FConnect;
+  FQueryDBList.Connection := FConnDBList;
+  CreateDBList;
+end;
+
+//-----------------------------------------------------------------+
+// DB List에 DB를 추가 한다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.CreateDB(dbName: String): Boolean;
+var
+  sFilePath: String;
+begin
+  sFilePath := GetCurrentDir + '\' + DEFAULT_DB_PATH + '\' + dbName + '.db';
+
+  //CreateParentDir(sFilePath);
+  try
+    OpenDBList;
+    FQueryDBList.SQL.Clear;
+    //FQueryDBList.SQL.Add('delete from dblist where name = ''' + dbName + ''';');
+    FQueryDBList.SQL.Add('insert into dblist values(''' + dbName + ''', ''' + sFilePath + ''');');
+    FQueryDBList.Execute;
+    result := true;
+  except
+    on e: Exception
+    do begin
+      if ContainsStr(LowerCase(e.Message), 'sql logic') = true then begin
+
+      end;
+      WriteErrorMessage(dbName + '를 DBList에 넣기 실패. ::::' + e.Message);
+      result := false;
+    end;
+  end;
+  CloseDBList;
+end;
+
+//-----------------------------------------------------------------+
+// DB List를 생성 한다.
+//-----------------------------------------------------------------+
+procedure TSQLiteDBManager.CreateDBList;
+begin
+  OpenDBList;
+  FQueryDBList.SQL.Clear;
+  FQueryDBList.SQL.Add('create table if not exists dblist(name char primary key, path text);');
+  FQueryDBList.Execute;
+  CloseDBList;
+end;
+
+//-----------------------------------------------------------------+
+// 소멸자. 현재 DB 관리자를 메모리에서 제거 한다.
+//-----------------------------------------------------------------+
+destructor TSQLiteDBManager.Destroy;
+begin
+  inherited;
+  self.Close;
+  FreeAndNil(FConnect);
+  FreeAndNil(FQuery);
+  FreeAndNil(FConnDBList);
+  FreeAndNil(FQueryDBList);
+  FreeAndNil(FProvider);
+end;
+
+//-----------------------------------------------------------------+
+// 지정된 이름의 DB를 DB List에서 삭제 한다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.DropDB(dbName: String): Boolean;
+begin
+  try
+  OpenDBList;
+  FQueryDBList.SQL.Clear;
+  FQueryDBList.SQL.Add('delete from dblist where name like ''' + dbName + ''';');
+  FQueryDBList.Execute;
+  result := true;
+  except
+    on e: Exception
+    do
+    begin
+      WriteErrorMessage(dbName + ' Dropping is Failed. ::::' + e.Message);
+      result := false;
+    end;
+  end;
+  CloseDBList;
+end;
+
+//-----------------------------------------------------------------+
+// Select문을 제외한 모든 쿼리문을 수행 한다.
+// 리턴값이 -1일 경우는 오류가 난 것이다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.ExecuteNonQuery(query: String): Integer;
+var
+  tt: String;
+begin
+  try
+    Open;
+    tt := FConnect.Database;
+    FQuery.SQL.Clear;
+    FQuery.SQL.Add(query);
+    FQuery.Execute;
+    result := 1;
+  except
+    on e: Exception
+    do
+    begin
+      WriteErrorMessage(query + '::::' + e.Message);
+      result := -1;
+    end;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// Select문과 같이 검색 결과가 있는 쿼리문을 수행 한다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.ExecuteQuery(query: String): TDataSet;
+var
+  objQuery: TUniQuery;
+begin
+  try
+    Open;
+    objQuery := TUniQuery.Create(nil);
+    objQuery.Connection := FConnect;
+    
+    objQuery.SQL.Clear;
+    objQuery.SQL.Add(query);
+    objQuery.Open;
+
+    result := objQuery;
+  except
+    on e: Exception
+    do
+    begin
+      WriteErrorMessage(query + '::::' + e.Message);
+      result := nil;
+    end;
+  end;
+end;
+
+//-----------------------------------------------------------------+
+// DB 이름을 이용하여 해당 DB의 파일 경로를 얻는다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.GetDBFilePath(dbName: String): String;
+begin
+  OpenDBList;
+  FQuery.SQL.Clear;
+  FQuery.SQL.Add('select path from dblist where name like ''' + dbName + ''';');
+  FQuery.Open;
+  result := FQuery.FieldByName('path').Value;
+  CloseDBList;
+end;
+
+//-----------------------------------------------------------------+
+// 현재 S/W에서 사용되는 모든 DB 목록을 가져 온다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.GetDBList(isFilter: Boolean): TDataSet;
+var
+  datasource: TDataSource;
+begin
+  //datasource := TDataSource.Create(nil);
+  OpenDBList;
+  FQueryDBList.SQL.Clear;
+  FQueryDBList.SQL.Add('select * from dblist');
+  FQueryDBList.Open;
+
+  result := FQueryDBList;
+end;
+
+//-----------------------------------------------------------------+
+// DB가 열려 있는지 확인 한다. 현재 DB로 사용할 파일 경로가 설정되어 있다면 true 이다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.IsOpen: Boolean;
+begin
+  result := (FConnect.Database <> '') and (FConnect.Database <> DEFAULT_SQLITE_DBLIST_FILE_NAME);
+end;
+
+//-----------------------------------------------------------------+
+// DB를 연다. 이 메서드를 실행시키기 전 DBName을 먼저 설정해야 한다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.Open: Boolean;
+begin
+  FConnect.Database := DBName + '.db';
+  FConnect.Open;
+end;
+
+//-----------------------------------------------------------------+
+// DBList가 담긴 dblist.db를 연다.
+//-----------------------------------------------------------------+
+procedure TSQLiteDBManager.OpenDBList;
+begin
+  FConnDBList.Database := DEFAULT_SQLITE_DBLIST_FILE_NAME;
+  FQueryDBList.Connection := FConnDBList;
+end;
+
+//-----------------------------------------------------------------+
+// DB를 복원 한다.
+//-----------------------------------------------------------------+
+function TSQLiteDBManager.Restore(filePath, RestoreName: String): Boolean;
+var
+  sDestFilePath: String;
+begin
+  sDestFilePath := GetCurrentDir + '\' + DEFAULT_DB_PATH + '\' + RestoreName + '.db';
+  if FileExists(sDestFilePath) = true then DeleteFile(sDestFilePath);
+  CopyFile(filePath, sDestFilepath);
+  CreateDB(RestoreName);
+end;
+
+procedure TSQLiteDBManager.SetColumnNames;
+var
+  sQuery: String;
+  sCompQuery: String;
+  sTableName: String;
+  enumerator: Classes.TStringsEnumerator;
+  dataset: TDataSet;
+  field: TField;
+  iCnt: Integer;
+  List_Columns: TStringList;
+begin
+  inherited;
+  if FTableNames = nil then self.SetTableNames;
+  FColumnNames := TStrHashMap.Create;
+  sQuery := 'PRAGMA table_info(''';
+  enumerator := FTableNames.GetEnumerator;
+
+  while enumerator.MoveNext do
+  begin
+    sCompQuery := sQuery + enumerator.Current + '''); ';
+    FQuery.SQL.Clear;
+    FQuery.SQL.Add(sCompQuery);
+    FQuery.Open;
+    dataset := FQuery;
+    field := dataset.FieldByName('name');
+    List_Columns := TStringList.Create;
+
+    for iCnt := 0 to dataset.RecordCount - 1 do
+    begin
+      List_Columns.Add(field.Value);
+      dataset.Next;
+    end;
+    FColumnNames.PutValue(enumerator.Current, List_Columns);
+  end;
+end;
+
+function TSQLiteDBManager.SetLoginInfo(id, pw, dbName, serverAddress: string):
+    Boolean;
+begin
+
+end;
+
+//-----------------------------------------------------------------+
+// DB내 모든 Table의 이름을 설정한다.
+//-----------------------------------------------------------------+
+procedure TSQLiteDBManager.SetTableNames;
+var
+  sQuery: String;
+  sCompQuery: String;
+  sTableName: String;
+  field: TField;
+  dataset: TDataSet;
+begin
+  inherited;
+  FTableNames := TStringList.Create;
+
+  sQuery := 'select name from sqlite_master where type = ''table''; ';
+  dataset := ExecuteQuery(sQuery);
+  field := dataset.FieldByName('name');
+  while dataset.Eof = false do
+  begin
+    FTableNames.Add(field.Value);
+    dataset.Next;
+  end;
+end;
+
+end.

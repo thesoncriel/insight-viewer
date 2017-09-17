@@ -1,0 +1,69 @@
+unit Event_SchOptPart_StageUnit;
+
+interface
+
+uses
+  SearchOption_Intf, FMX.Controls, Event_SchOptPartUnit,
+  Event_SchOpt_StageEditorUnit, StageOptionPart, Event_SchOpt_LogSearchUnit;
+
+type
+  TEvent_SchOpt_Stage = class(TEvent_AbsSearchOptionPart)
+    private
+      FChkAutoDetect: TCheckBox;
+      FStageEditor: TEvent_SchOpt_StageEditor;
+      FLogSearch: TEvent_SchOpt_LogSearch;
+    protected
+      procedure ChkAutoDetectCheckedChange(Sender: TObject);
+    public
+      constructor Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TEvent_SchOpt_StageEditor; logSearch: TEvent_SchOpt_LogSearch);
+      function GetSearchOptionPart: ISearchOptionPart; override;
+      procedure SetAutoStageDetectionByDBMS(dbmsName: String);
+      function GetStageOptionList: TStageOptionList;
+  end;
+implementation
+
+{ TEvent_SchOpt_Stage }
+
+procedure TEvent_SchOpt_Stage.ChkAutoDetectCheckedChange(Sender: TObject);
+begin
+  FStageEditor.SetEnabled( FChkAutoDetect.IsChecked );
+  FLogSearch.SetEnabled( FChkAutoDetect.IsChecked );
+end;
+
+constructor TEvent_SchOpt_Stage.Create(owner: TExpander; autoDetect: TCheckBox;
+        stageEditor: TEvent_SchOpt_StageEditor; logSearch: TEvent_SchOpt_LogSearch);
+begin
+  Init( owner );
+  FChkAutoDetect := autoDetect;
+  FStageEditor := stageEditor;
+  FLogSearch := logSearch;
+
+  FChkAutoDetect.OnChange := ChkAutoDetectCheckedChange;
+end;
+
+function TEvent_SchOpt_Stage.GetSearchOptionPart: ISearchOptionPart;
+begin
+  result := FStageEditor.GetStageOption( 0 );
+end;
+
+function TEvent_SchOpt_Stage.GetStageOptionList: TStageOptionList;
+begin
+  result := FStageEditor.GetStageOptionList;
+end;
+
+procedure TEvent_SchOpt_Stage.SetAutoStageDetectionByDBMS(dbmsName: String);
+begin
+  if dbmsName = 'firebird' then
+  begin
+    FChkAutoDetect.Enabled := true;
+    FChkAutoDetect.IsChecked := true;
+  end
+  else
+  begin
+    FChkAutoDetect.Enabled := false;
+    FChkAutoDetect.IsChecked := false;
+  end;
+end;
+
+end.

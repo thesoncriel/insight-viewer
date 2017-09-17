@@ -1,0 +1,13 @@
+program Project;
+
+uses
+  FMX.Forms,
+  FormMain_Unit in 'FormMain_Unit.pas' {FormMain};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.CreateForm(TFormMain, FormMain);
+  Application.Run;
+end.

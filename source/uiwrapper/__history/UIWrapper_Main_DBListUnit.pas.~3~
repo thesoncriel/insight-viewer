@@ -1,0 +1,15 @@
+unit UIWrapper_Main_DBListUnit;
+
+interface
+
+type
+  TUIWrapper_Main_DBList = class(TObject)
+    private
+      FTabControl: TTabControl;
+    protected
+    public
+  end;
+
+implementation
+
+end.

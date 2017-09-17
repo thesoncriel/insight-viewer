@@ -1,0 +1,198 @@
+object Form_Main: TForm_Main
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Form1'
+  ClientHeight = 400
+  ClientWidth = 600
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Button1: TButton
+    Position.Point = '(64,344)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button1Click
+    TabOrder = 0
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button1'
+  end
+  object Button2: TButton
+    Position.Point = '(200,352)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button2Click
+    TabOrder = 1
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button2'
+  end
+  object StringGrid1: TStringGrid
+    Position.Point = '(160,48)'
+    Width = 201.000000000000000000
+    Height = 100.000000000000000000
+    StyleLookup = 'gridstyle'
+    TabOrder = 2
+    AlternatingRowBackground = True
+    RowHeight = 21.000000000000000000
+    RowCount = 2
+    object TStringColumn
+      Width = 64.000000000000000000
+      Height = 77.000000000000000000
+      HitTest = False
+      TabOrder = 0
+      Header = 'ID'
+    end
+    object TStringColumn
+      Position.Point = '(64,0)'
+      Width = 64.000000000000000000
+      Height = 77.000000000000000000
+      HitTest = False
+      TabOrder = 1
+      Header = 'NAME'
+    end
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = True
+    Left = 20
+    Top = 5
+    object BindGridLinkGrid11: TBindGridLink
+      Category = 'Links'
+      ColumnExpressions = <>
+      PosControlExpressions = <>
+      PosSourceExpressions = <>
+      FormatControlExpressions = <>
+      ClearControlExpressions = <>
+    end
+    object DBLinkStringGrid12: TBindDBGridLink
+      Category = 'DB Links'
+      DataSource = BindScopeDB1
+      GridControl = StringGrid1
+      Columns = <>
+    end
+  end
+  object SQLConnection1: TSQLConnection
+    ConnectionName = 'HAHAFB'
+    DriverName = 'FIREBIRD'
+    GetDriverFunc = 'getSQLDriverINTERBASE'
+    LibraryName = 'dbxfb.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'drivername=FIREBIRD'
+      'librarynameosx=libsqlfb.dylib'
+      'vendorlibwin64=fbclient.dll'
+      'vendorlibosx=/Library/Frameworks/Firebird.framework/Firebird'
+      'blobsize=-1'
+      'commitretain=False'
+      'Database=d:\gogo.fdb'
+      'localecode=0000'
+      'Password=masterkey'
+      'rolename=RoleName'
+      'sqldialect=1'
+      'isolationlevel=ReadCommitted'
+      'user_name=sysdba'
+      'waitonlocks=True'
+      'trim char=False')
+    TableScope = [tsSynonym, tsSysTable, tsTable, tsView]
+    VendorLib = 'fbclient.dll'
+    Connected = True
+    Left = 448
+    Top = 208
+  end
+  object ADOConnection1: TADOConnection
+    ConnectionString = 
+      'Provider=LCPI.IBProvider.3;Data Source=localhost:d:\temp\test.fd' +
+      'b;User Id=SYSDBA;password=masterkey;ctype=win1251;auto_commit=tr' +
+      'ue'
+    LoginPrompt = False
+    Provider = 'LCPI.IBProvider.3'
+    Left = 496
+    Top = 272
+  end
+  object BindScopeDB1: TBindScopeDB
+    DataSource = DataSource1
+    Left = 26
+    Top = 130
+  end
+  object DataSource1: TDataSource
+    DataSet = SimpleDataSet1
+    Left = 312
+    Top = 208
+  end
+  object SimpleDataSet1: TSimpleDataSet
+    Active = True
+    Aggregates = <>
+    Connection = SQLConnection1
+    DataSet.GetMetadata = True
+    DataSet.NumericMapping = True
+    DataSet.CommandText = 'select * from haha;'
+    DataSet.MaxBlobSize = -1
+    DataSet.ParamCheck = False
+    DataSet.Params = <>
+    Params = <>
+    Left = 384
+    Top = 208
+  end
+  object SQLConnection2: TSQLConnection
+    ConnectionName = 'MSSQLCONNECTION'
+    DriverName = 'MSSQL'
+    GetDriverFunc = 'getSQLDriverMSSQL'
+    LibraryName = 'dbxmss.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'DriverUnit=Data.DBXMSSQL'
+      
+        'DriverPackageLoader=TDBXDynalinkDriverLoader,DBXCommonDriver160.' +
+        'bpl'
+      
+        'DriverAssemblyLoader=Borland.Data.TDBXDynalinkDriverLoader,Borla' +
+        'nd.Data.DbxCommonDriver,Version=16.0.0.0,Culture=neutral,PublicK' +
+        'eyToken=91d62ebb5b0d1b1b'
+      
+        'MetaDataPackageLoader=TDBXMsSqlMetaDataCommandFactory,DbxMSSQLDr' +
+        'iver160.bpl'
+      
+        'MetaDataAssemblyLoader=Borland.Data.TDBXMsSqlMetaDataCommandFact' +
+        'ory,Borland.Data.DbxMSSQLDriver,Version=16.0.0.0,Culture=neutral' +
+        ',PublicKeyToken=91d62ebb5b0d1b1b'
+      'GetDriverFunc=getSQLDriverMSSQL'
+      'LibraryName=dbxmss.dll'
+      'VendorLib=sqlncli10.dll'
+      'VendorLibWin64=sqlncli10.dll'
+      'MaxBlobSize=-1'
+      'OSAuthentication=False'
+      'PrepareSQL=True'
+      'ErrorResourceFile='
+      'schemaoverride=sa.dbo'
+      'drivername=MSSQL'
+      'hostname=localhost\SQLEXPRESS'
+      'Database=master'
+      'blobsize=-1'
+      'localecode=0000'
+      'isolationlevel=ReadCommitted'
+      'OS Authentication=True'
+      'prepare sql=False'
+      'connecttimeout=60'
+      'mars_connection=False'
+      'User_Name=sa'
+      'Password=1234')
+    VendorLib = 'sqlncli10.dll'
+    Left = 544
+    Top = 72
+  end
+  object SimpleDataSet2: TSimpleDataSet
+    Aggregates = <>
+    DataSet.MaxBlobSize = -1
+    DataSet.Params = <>
+    Params = <>
+    Left = 488
+    Top = 72
+  end
+  object DataSource2: TDataSource
+    Left = 432
+    Top = 72
+  end
+end

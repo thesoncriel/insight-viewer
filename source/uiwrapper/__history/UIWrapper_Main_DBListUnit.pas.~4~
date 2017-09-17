@@ -1,0 +1,17 @@
+unit UIWrapper_Main_DBListUnit;
+
+interface
+
+uses
+  FMX.TabControl;
+
+type
+  TUIWrapper_Main_DBList = class(TObject)
+    private
+      FTabControl: TTabControl;
+
+  end;
+
+implementation
+
+end.

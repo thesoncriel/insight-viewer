@@ -1,0 +1,39 @@
+unit Event_Main_DBTreeViewUnit;
+
+interface
+
+uses
+  FMX.TreeView;
+
+type
+  TEvent_DBTreeView = class(TObject)
+    private
+      FDBTreeView: TTreeView;
+    public
+      constructor Create( treeView: TTreeView);
+  end;
+
+implementation
+
+uses
+  Form_MainUnit;
+
+procedure MenuItem2Click(Sender: TObject);
+var
+  item: TTreeViewItem;
+begin
+  item := TTreeViewItem.Create( nil );
+  item.Text := 'haha';
+  //TreeView_DBList.Insert
+  Form_Main.TreeView_DBList.AddObject( item );
+end;
+
+{ TEvent_DBTreeView }
+
+constructor TEvent_DBTreeView.Create(treeView: TTreeView);
+begin
+  FDBTreeView := treeView;
+  //FDBTreeView.On
+end;
+
+end.

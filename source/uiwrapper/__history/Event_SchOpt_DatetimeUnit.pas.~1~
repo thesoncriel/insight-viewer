@@ -1,0 +1,31 @@
+unit Event_SchOpt_Datetime;
+
+interface
+
+uses
+  Event_SchOpt_SchOptPartUnit, SearchOption_Intf;
+
+type
+  TEvent_SchOpt_Datetime = class(TEvent_AbsSearchOptionPart)
+    public
+      function GetSearchOptionPart: ISearchOptionPart; override;
+  end;
+
+implementation
+
+uses
+  SimpleOptionPart;
+
+{ TEvent_SchOpt_Datetime }
+
+function TEvent_SchOpt_Datetime.GetSearchOptionPart: ISearchOptionPart;
+var
+  schOpt: TSimpleOptionPart;
+begin
+  schOpt := TSimpleOptionPart.Create;
+  schOpt.SetUse( FExpander.IsChecked );
+
+  result := schOpt;
+end;
+
+end.

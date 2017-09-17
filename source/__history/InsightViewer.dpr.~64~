@@ -1,0 +1,69 @@
+program InsightViewer;
+
+uses
+  FMX.Forms,
+  Form_MainUnit in 'forms\Form_MainUnit.pas' {Form_Main},
+  DBManager in 'class\dbm\DBManager.pas',
+  FireBirdDBManager in 'class\dbm\FireBirdDBManager.pas',
+  MsSqlDBManager in 'class\dbm\MsSqlDBManager.pas',
+  QueryReader in 'class\dbm\QueryReader.pas',
+  DataFileSaver in 'class\filesaver\DataFileSaver.pas',
+  ExcelSaver in 'class\filesaver\ExcelSaver.pas',
+  SearchOption in 'class\searchoption\SearchOption.pas',
+  StageOptionPart in 'class\searchoption\StageOptionPart.pas',
+  SearchOption_Intf in 'class\searchoption\SearchOption_Intf.pas',
+  ColumnsOptionPart in 'class\searchoption\ColumnsOptionPart.pas',
+  SearchResult in 'class\SearchResult.pas',
+  Form_SearchOptionUnit in 'forms\Form_SearchOptionUnit.pas' {Form_SearchOption},
+  Const_SearchOptionUnit in 'class\searchoption\Const_SearchOptionUnit.pas',
+  Frame_SchOpt_StageInfo in 'frame\Frame_SchOpt_StageInfo.pas',
+  uib in 'class\uib25\uib.pas',
+  uibase in 'class\uib25\uibase.pas',
+  uibavl in 'class\uib25\uibavl.pas',
+  uibcloner in 'class\uib25\uibcloner.pas',
+  uibconst in 'class\uib25\uibconst.pas',
+  uibdataset in 'class\uib25\uibdataset.pas',
+  uibdescriptor in 'class\uib25\uibdescriptor.pas',
+  uiberror in 'class\uib25\uiberror.pas',
+  uibkeywords in 'class\uib25\uibkeywords.pas',
+  uiblib in 'class\uib25\uiblib.pas',
+  uibmetadata in 'class\uib25\uibmetadata.pas',
+  uibscriptbuilder in 'class\uib25\uibscriptbuilder.pas',
+  uibsqlparser in 'class\uib25\uibsqlparser.pas',
+  UIWrapper_DBListUnit in 'uiwrapper\Main\UIWrapper_DBListUnit.pas',
+  UIWrapper_DBTreeViewUnit in 'uiwrapper\Main\UIWrapper_DBTreeViewUnit.pas',
+  UIWrapper_StageGridListUnit in 'uiwrapper\Main\UIWrapper_StageGridListUnit.pas',
+  UIWrapper_StageGridUnit in 'uiwrapper\Main\UIWrapper_StageGridUnit.pas',
+  UIWrapper_LogSearchUnit in 'uiwrapper\SearchOption\UIWrapper_LogSearchUnit.pas',
+  UIWrapper_StageEditorUnit in 'uiwrapper\SearchOption\UIWrapper_StageEditorUnit.pas',
+  FileManager in 'class\dbm\FileManager.pas',
+  UIWappedPartUnit in 'class\searchoption\UIWappedPartUnit.pas',
+  GroupOptionPart in 'class\searchoption\GroupOptionPart.pas',
+  DatetimeOptionPart in 'class\searchoption\DatetimeOptionPart.pas',
+  RoundOptionPart in 'class\searchoption\RoundOptionPart.pas',
+  StageOptionPartList in 'class\searchoption\StageOptionPartList.pas',
+  HashedOptionPart in 'class\searchoption\HashedOptionPart.pas',
+  ArrayList in 'class\dcl\ArrayList.pas',
+  ArraySet in 'class\dcl\ArraySet.pas',
+  BinaryTree in 'class\dcl\BinaryTree.pas',
+  DCL_intf in 'class\dcl\DCL_intf.pas',
+  DCLUtil in 'class\dcl\DCLUtil.pas',
+  HashMap in 'class\dcl\HashMap.pas',
+  HashSet in 'class\dcl\HashSet.pas',
+  LinkedList in 'class\dcl\LinkedList.pas',
+  Queue in 'class\dcl\Queue.pas',
+  Stack in 'class\dcl\Stack.pas',
+  Vector in 'class\dcl\Vector.pas',
+  AbstractContainer in 'class\dcl\AbstractContainer.pas',
+  Algorithms in 'class\dcl\Algorithms.pas',
+  SimpleResult in 'class\SimpleResult.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  //Application.CreateForm(TForm_Main, Form_Main);
+  Application.CreateForm(TForm_Main, Form_Main);
+  Application.CreateForm(TForm_SearchOption, Form_SearchOption);
+  Application.Run;
+end.

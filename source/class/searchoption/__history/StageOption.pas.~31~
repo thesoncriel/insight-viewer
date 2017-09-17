@@ -1,0 +1,118 @@
+unit StageOption;
+
+interface
+
+uses
+  SearchOption, SearchOptionPart;
+
+type
+
+  ILogData = interface(IInterface)
+  ['{FF5EFD1C-F749-4593-80D8-3CE08101BEA8}']
+    function GetDate: String;
+    function GetMsg: String;
+  end;
+
+  TJournalData = class(TInterfacedObject, ILogData)
+    private
+      FDate: String;
+      FMsg: String;
+    public
+      constructor Create(date, msg: String);
+      function GetDate: String;
+      function GetMsg: String;
+  end;
+
+  TStageOption = class(TInterfacedObject, ISearchOptionPart)
+    private
+      FTitle: String;
+      FLogData: array[0..1] of ILogData;
+      FUse: Boolean;
+      FSearchOpt: TSearchOption;
+    protected
+//      function GetTitle: String;
+//      procedure SetTitle(val: String);
+//      function GetStart: ILogData;
+//      procedure SetStart(val: ILogData);
+//      function GetEnd: ILogData;
+//      procedure SetEnd(val: ILogData);
+    public
+      constructor Create(searchOpt: TSearchOption);
+      function GetValues(key: String): String;
+      function GetQueryPart: String;
+      procedure SetUse(val: Boolean);
+      function IsUse: Boolean;
+
+      property Title: String read FTitle write FTitle;
+      property StartLog: ILogData read FLogData[ 0 ] write FLogData[ 0 ];
+      property EndLog: ILogData read FLogData[ 1 ] write FLogData[ 1 ];
+//      property Title: String read GetTitle write SetTitle;
+//      property StartLog: ILogData read GetStart write SetStart;
+//      property EndLog: ILogData read GetEnd write SetEnd;
+  end;
+
+implementation
+
+{ TJournalData }
+
+constructor TJournalData.Create(date, msg: String);
+begin
+  FDate := date;
+  FMsg := msg;
+end;
+
+function TJournalData.GetDate: String;
+begin
+  result := FDate;
+end;
+
+function TJournalData.GetMsg: String;
+begin
+  result := FMsg;
+end;
+
+{ TStageOption }
+
+constructor TStageOption.Create(searchOpt: TSearchOption);
+begin
+  FSearchOpt := searchOpt;
+end;
+
+function TStageOption.GetQueryPart: String;
+var
+  sQueryPart: String;
+  sDateCol: String;
+begin
+  if IsUse = true then
+  begin
+    sDateCol := FSearchOpt.Values[ 'columns', 'datecol' ];
+    sQueryPart := ' where ' + sDateCol +
+                  ' between ' + FLogData[ 0 ].GetDate +
+                  ' and ' + FLogData[ 1 ].GetDate + ' ';
+    result := sQueryPart;
+  end
+  else
+    result := '';
+end;
+
+function TStageOption.GetValues(key: String): String;
+begin
+  inherited;
+  if      key = 'title' then result := FTitle
+  else if key = 'start' then result := FLogData[ 0 ].GetDate
+  else if key = 'end'   then result := FLogData[ 1 ].GetDate
+  else    result := '';
+
+end;
+
+function TStageOption.IsUse: Boolean;
+begin
+  result := FUse;
+end;
+
+procedure TStageOption.SetUse(val: Boolean);
+begin
+  FUse := val;
+end;
+
+end.

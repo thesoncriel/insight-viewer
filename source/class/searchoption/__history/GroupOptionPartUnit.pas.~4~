@@ -1,0 +1,58 @@
+unit GroupOptionPartUnit;
+
+interface
+uses
+  Classes, SearchOption_Intf, FMX.ListBox, FMX.Controls, UIWappedPartUnit;
+
+type
+  TGruopOptionPart = class(TAbsUIWrappedPart)
+    private
+      FCmbTimeUnit: TComboBox;
+      FCmbFunction: TComboBox;
+    public
+      constructor Create(owner: TExpander; cmbTimeUnit, cmbFunction: TComboBox);
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+  end;
+
+
+implementation
+
+uses
+  Const_SearchOptionUnit, System.SysUtils;
+
+{ TGruopOptionPart }
+
+constructor TGruopOptionPart.Create(owner: TExpander; cmbTimeUnit,
+  cmbFunction: TComboBox);
+var
+  sList_TimeUnit, sList_Function: TStringList;
+begin
+  Create( owner );
+  FCmbTimeUnit := cmbTimeUnit;
+  FCmbFunction := cmbFunction;
+
+  sList_TimeUnit := StrArrayToStrList( ITEM_LIST_GROUP_TIMEUNIT_VIEW );
+  sList_Function := StrArrayToStrList( ITEM_LIST_GROUP_FUNCTION );
+
+  FCmbTimeUnit.Items := sList_TimeUnit;
+  FCmbTimeUnit.ItemIndex := sList_TimeUnit.IndexOf( ITEM_DEFAULT_GROUP_TIMEUNIT ); //Default: 1 min
+  FCmbFunction.Items := sList_Function;
+  FCmbFunction.ItemIndex := sList_Function.IndexOf( ITEM_DEFAULT_GROUP_FUNCTION ); //Default: AVG
+end;
+
+function TGruopOptionPart.GetValues(key: String): String;
+begin
+  if      key = 'group.use'       then result := IsUseToString
+  else if key = 'group.several'   then result := ITEM_LIST_GROUP_TIMEUNIT_FACT[ FCmbTimeUnit.Index ]
+  else if key = 'group.func'      then result := FCmbFunction.Selected.Text;
+end;
+
+procedure TGruopOptionPart.SetValues(key, val: String);
+begin
+  if      key = 'group.use'     then SetUse( StrToBool( val ) )
+  else if key = 'group.several' then FCmbTimeUnit.ItemIndex := FCmbTimeUnit.Items.IndexOf( val )
+  else if key = 'group.func'    then FCmbFunction.ItemIndex := FCmbFunction.Items.IndexOf( val );
+end;
+
+end.

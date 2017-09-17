@@ -1,0 +1,10 @@
+unit Event_Main_StageGridUnit;
+
+interface
+type
+  TEvent_Main_StageGrid = class(TObject)
+
+  end;
+implementation
+
+end.

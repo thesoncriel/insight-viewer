@@ -1,0 +1,195 @@
+unit SearchOptionPart;
+
+interface
+
+uses
+  Classes, DCL_intf, SearchOption_Intf;
+
+type
+  TSearchOptionPart = class(TInterfacedObject, ISearchOptionPart)
+    protected
+      FHashMap: IStrMap;
+      FUse: Boolean;
+      function InsertPartToQueryByBoolean(tagQuery: String; val: Boolean; currIndex: Integer): String;
+    public
+      constructor Create; virtual;
+      destructor Destroy; override;
+      function GetValues(key: String): String; virtual;
+      procedure SetValues(key, val: String); virtual;
+      property Items[key: String]: String read GetValues write SetValues;
+
+      function InsertPartToQuery(tagQuery, key: String; currIndex: Integer): String; virtual;
+      function IsUse: Boolean; virtual;
+      procedure SetUse(val: Boolean); virtual;
+  end;
+
+  TColumnListOptionPart = class(TSearchOptionPart)
+    protected
+      FDBMSName: String;
+      FColumns: TStringList;
+      FNormalQuery: String;
+      FGroupQuery: String;
+      procedure SetTemplateQuery;
+      function GetQueryPart_Normal: String;
+      function GetQueryPart_Group: String;
+    public
+      constructor Create(dbmsName: String); virtual overload;
+      constructor Create; virtual; override; overload;
+      procedure SetColumnList(cols: TStringList);
+      function InsertPartToQuery(tagQuery, key: String; currIndex): String; virtual; override;
+      function GetValues(key: String): String; override;
+      procedure SetValues(key, val: String); override;
+  end;
+
+
+implementation
+
+uses
+  HashMap, System.SysUtils, QueryReader;
+
+{ TSearchOptionPart }
+
+constructor TSearchOptionPart.Create;
+begin
+  FHashMap := TStrHashMap.Create;
+  FUse := false;
+end;
+
+destructor TSearchOptionPart.Destroy;
+begin
+  FHashMap.Clear;
+  FHashMap._Release;
+  inherited;
+end;
+
+function TSearchOptionPart.GetValues(key: String): String;
+begin
+  if key = 'use' then
+    result := BoolToStr( FUse )
+  else
+    result := GetValues( key );
+end;
+
+function TSearchOptionPart.InsertPartToQuery(tagQuery, key: String;
+  currIndex: Integer): String;
+var
+  sTemp: String;
+  sVal: String;
+begin
+  sVal := Items[ key ];
+
+  if (sVal = 'true') or (sVal = 'false') then
+    sTemp := InsertPartToQueryByBoolean( tagQuery, StrToBool( sVal), currIndex )
+  else
+    sTemp := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + '}', Items[ key ], [ rfReplaceAll, rfIgnoreCase ] );
+
+  result := sTemp;
+end;
+
+function TSearchOptionPart.IsUse: Boolean;
+begin
+  result := FUse;
+end;
+
+function TSearchOptionPart.InsertPartToQueryByBoolean(tagQuery: String; val: Boolean;
+  currIndex: Integer): String;
+var
+  sRightBracket1: String;
+  sRightBracket2: String;
+begin
+  if val = true then
+  begin
+    sRightBracket1 := 't}';
+    sRightBracket2 := 'f}';
+  end
+  else
+  begin
+    sRightBracket1 := 'f}';
+    sRightBracket2 := 't}';
+  end;
+
+  tagQuery := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + sRightBracket1, '', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{/' + IntToStr( currIndex ) + sRightBracket1, '', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{' + IntToStr( currIndex ) + sRightBracket2, '/*', [ rfReplaceAll, rfIgnoreCase ] );
+  tagQuery := StringReplace( tagQuery, '{/' + IntToStr( currIndex ) + sRightBracket2, '*/', [ rfReplaceAll, rfIgnoreCase ] );
+
+  result := tagQuery;
+end;
+
+procedure TSearchOptionPart.SetValues(key: String; val: String);
+begin
+  FHashMap.PutValue( key, TObject( val ) );
+end;
+
+procedure TSearchOptionPart.SetUse(val: Boolean);
+begin
+  FUse := val;
+end;
+
+{ TColumnListOptionPart }
+
+constructor TColumnListOptionPart.Create(dbmsName: String);
+begin
+  Create;
+  FDBMSName := dbmsName;
+  SetTemplateQuery;
+end;
+
+constructor TColumnListOptionPart.Create;
+begin
+  inherited;
+  FDBMSName := 'common';
+  SetTemplateQuery;
+end;
+
+
+function TColumnListOptionPart.GetValues(key: String): String;
+begin
+
+end;
+
+function TColumnListOptionPart.InsertPartToQuery(tagQuery, key: String;
+  currIndex): String;
+var
+  sbQuery: TStringBuilder;
+  sTempQuery: String;
+  i: Integer;
+begin
+  sbQuery := TStringBuilder.Create;
+
+  if key = 'normal' then
+    sTempQuery := FNormalQuery
+  else
+    sTempQuery := FGroupQuery;
+
+  for i := 0 to FColumns.Count - 1 do
+  begin
+    sbQuery.Append(
+      StringReplace( tagQuery, '{0}', FColumns[ i ], [ rfReplaceAll, rfIgnoreCase ] ) );
+  end;
+
+  result := sbQuery.ToString;
+end;
+
+procedure TColumnListOptionPart.SetColumnList(cols: TStringList);
+begin
+  FColumns := cols;
+end;
+
+procedure TColumnListOptionPart.SetTemplateQuery;
+var
+  queryReader: TQueryReader;
+begin
+  queryReader.Create( FDBMSName, 'insightviewer' );
+  FNormalQuery := queryReader( 'template.column.normal' );
+  FGroupQuery := queryReader( 'template.column.group' );
+  queryReader.Free;
+end;
+
+procedure TColumnListOptionPart.SetValues(key, val: String);
+begin
+  inherited;
+
+end;
+
+end.

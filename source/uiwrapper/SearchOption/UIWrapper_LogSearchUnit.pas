@@ -1,0 +1,268 @@
+unit UIWrapper_LogSearchUnit;
+
+interface
+
+uses
+  FMX.ListBox, FMX.Edit, FMX.Controls, DB, System.UITypes, Classes, DCL_intf,
+  DBManager, StrUtils, SearchOption_Intf;
+
+type
+  TUIWrapper_LogSearch = class(TObject)
+    private
+      FComboBox_LogTableName: TComboBox;
+      FEdit_SearchKeyword: TClearingEdit;
+      FButton_SearchLog: TButton;
+      FListBox_LogData: TListBox;
+      FLogDataSet: IStrMap;
+      FDBManager: TAbsDBManager;
+      FLogDataStrList: TStringList;
+
+      FOnLogDataSelected: TLogDataEvent;
+    protected
+      procedure SetDataByTableName(tableName: String);
+      function HasLogDataSet(tableName: String): Boolean;
+      procedure SetLogTables(dbmsName: String);
+      function GetFilterStr(keyword: String): String;
+
+      procedure ListBox_LogDataMouseDown(Sender: TObject;
+                  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+      procedure ListBox_LogDataDragEnd(Sender: TObject);
+      procedure ComboBox_LogTableNameChange(Sender: TObject);
+      procedure ClearingEdit_KeywordKeyUp(Sender: TObject;
+                          var Key: Word; var KeyChar: Char; Shift: TShiftState);
+      procedure Button_LogSearchClick(Sender: TObject);
+      procedure ListBox_LogDataDblClick(Sender: TObject);
+      procedure OnLogDataSelected_Proc(Sender: TObject; logData: ILogData);
+    public
+      constructor Create(logTableName: TComboBox; searchKeyword: TClearingEdit;
+                          searchLog: TButton; logData: TListBox);
+      destructor Destroy; override;
+      procedure SetData(data: TDataSet);
+      procedure Clear;
+      procedure SearchLog(tableName, keyword: String);
+      procedure SetEnabled(val: Boolean);
+      procedure SetDBManager(dbm: TAbsDBManager);
+
+    published
+      property OnLogDataSelected: TLogDataEvent read FOnLogDataSelected write FOnLogDataSelected;
+  end;
+
+implementation
+
+uses
+  SysUtils, HashMap, QueryReader, Windows;
+
+{ TEvent_SchOpt_LogSearch }
+
+constructor TUIWrapper_LogSearch.Create(logTableName: TComboBox;
+  searchKeyword: TClearingEdit; searchLog: TButton; logData: TListBox);
+begin
+  FComboBox_LogTableName := logTableName;
+  FEdit_SearchKeyword := searchKeyword;
+  FButton_SearchLog := searchLog;
+  FListBox_LogData := logData;
+  FLogDataSet := TStrHashMap.Create;
+
+  //SetLogTableToComboBox( dbm.GetDBMSName );
+
+  FListBox_LogData.OnMouseDown := ListBox_LogDataMouseDown;
+  FListBox_LogData.OnDragEnd := ListBox_LogDataDragEnd;
+  FListBox_LogData.OnDblClick := ListBox_LogDataDblClick;
+  FComboBox_LogTableName.OnChange := ComboBox_LogTableNameChange;
+  FEdit_SearchKeyword.OnKeyUp := ClearingEdit_KeywordKeyUp;
+  FButton_SearchLog.OnClick := Button_LogSearchClick;
+end;
+
+destructor TUIWrapper_LogSearch.Destroy;
+begin
+
+  inherited;
+end;
+
+function TUIWrapper_LogSearch.GetFilterStr(keyword: String): String;
+var
+  sList: TStringList;
+begin
+  //sList := FDBManager.Get
+end;
+
+function TUIWrapper_LogSearch.HasLogDataSet(tableName: String): Boolean;
+begin
+  result := ( FLogDataSet.ContainsKey( tableName ) = true ) and
+            ( FLogDataSet.GetValue( tableName ) <> nil );
+end;
+
+procedure TUIWrapper_LogSearch.SearchLog(tableName, keyword: String);
+var
+  data: TDataSet;
+  i: Integer;
+  sTarget: String;
+begin
+  if HasLogDataSet( tableName ) = true then
+  begin
+    data := TDataSet( FLogDataSet.GetValue( tableName ) );
+    data.Open;
+  end
+  else
+  begin
+    exit;
+  end;
+
+  if keyword <> '' then
+  begin
+    data.Filter := 'msg like ''%' + keyword + '%''';
+    data.Filtered := true;
+  end
+  else
+  begin
+    data.Filter := '';
+    data.Filtered := false;
+  end;
+
+                                            //FListBox_LogData.
+//  for i := 0 to FListBox_LogData.Count - 1 do
+//  begin
+//    sTarget := FListBox_LogData.ListItems[ i ].Text;
+//
+//    if ContainsStr( sTarget, keyword ) = true then
+//      FListBox_LogData.ListItems[ i ].Visible := true
+//    else
+//      FListBox_LogData.ListItems[ i ].Visible := false;
+//  end;
+
+  SetData( data );
+end;
+
+procedure TUIWrapper_LogSearch.SetData(data: TDataSet);
+var
+  field: TField;
+  sDate: String;
+  i: Integer;
+  sbFieldVal: TStringBuilder;
+begin
+  FListBox_LogData.Clear;
+  sbFieldVal := TStringBuilder.Create;
+  data.First;
+
+  while data.Eof = false do
+  begin
+    DateTimeToString( sDate, 'yyyy-MM-dd HH:mm:ss', data.Fields[ 0 ].AsDateTime );
+
+    for i := 1 to data.FieldCount - 1 do
+    begin
+      sbFieldVal.Append( ' ' + data.Fields[ i ].AsString )
+    end;
+
+    FListBox_LogData.Items.Add( sDate + '|' + sbFieldVal.ToString );
+    sbFieldVal.Clear;
+    data.Next;
+  end;
+end;
+
+procedure TUIWrapper_LogSearch.SetDataByTableName(tableName: String);
+var
+  data: TDataSet;
+  qReader: TQueryReader;
+  sQuery: String;
+begin
+  qReader := TQueryReader.Create( FDBManager.GetDBMSName, 'insightviewer' );
+  sQuery := qReader.GetQuery( 'datalog.' + tableName );
+  //sQuery := 'select datetime, division, actor, action || '' '' || alarmmessage from alarmlog;';
+  //FDBManager.Open;
+  data := FDBManager.ExecuteQuery( sQuery );
+  FLogDataSet.PutValue( tableName, data );
+
+  qReader.Free;
+  SetData( data );
+  FDBManager.Close;
+end;
+
+procedure TUIWrapper_LogSearch.SetDBManager(dbm: TAbsDBManager);
+begin
+  FDBManager := dbm;
+  SetLogTables( dbm.GetDBMSName );
+end;
+
+procedure TUIWrapper_LogSearch.SetEnabled(val: Boolean);
+begin
+  FComboBox_LogTableName.Enabled := val;
+  FEdit_SearchKeyword.Enabled := val;
+  FButton_SearchLog.Enabled := val;
+  FListBox_LogData.Enabled := val;
+end;
+
+procedure TUIWrapper_LogSearch.SetLogTables(dbmsName: String);
+begin
+  if      dbmsName = 'mssql' then
+  begin
+    FComboBox_LogTableName.Clear;
+    FComboBox_LogTableName.Items.Add( 'journal' );
+  end
+  else if dbmsName = 'firebird' then
+  begin
+    FComboBox_LogTableName.Clear;
+    FComboBox_LogTableName.Items.Add( 'EVENTLOG' );
+    FComboBox_LogTableName.Items.Add( 'ALARMLOG' );
+  end;
+end;
+
+procedure TUIWrapper_LogSearch.ListBox_LogDataMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  FListBox_LogData.AllowDrag := true;
+
+end;
+
+procedure TUIWrapper_LogSearch.OnLogDataSelected_Proc(Sender: TObject;
+  logData: ILogData);
+begin
+  if Assigned( OnLogDataSelected ) = true then
+    OnLogDataSelected( Sender, logData );
+end;
+
+procedure TUIWrapper_LogSearch.ListBox_LogDataDblClick(Sender: TObject);
+var
+  logData: TJournalData;
+begin
+  logData := TJournalData.Create( FListBox_LogData.Selected.Text );
+  OnLogDataSelected_Proc( self, logData );
+end;
+
+procedure TUIWrapper_LogSearch.ListBox_LogDataDragEnd(Sender: TObject);
+begin
+  FListBox_LogData.AllowDrag := false;
+end;
+
+procedure TUIWrapper_LogSearch.Clear;
+begin
+  FLogDataSet.Clear;
+end;
+
+procedure TUIWrapper_LogSearch.ComboBox_LogTableNameChange(Sender: TObject);
+begin
+  if FComboBox_LogTableName.ItemIndex > -1 then
+  begin
+//    if FLogDataStrList <> nil then FLogDataStrList.Free;
+//
+//    FLogDataStrList := TStringList.Create;
+//    Copy( FLogDataStrList, FListBox_LogData.Items, FListBox_LogData.Items.InstanceSize );
+
+    SetDataByTableName( FComboBox_LogTableName.Selected.Text );
+  end;
+end;
+
+procedure TUIWrapper_LogSearch.ClearingEdit_KeywordKeyUp(Sender: TObject;
+  var Key: Word; var KeyChar: Char; Shift: TShiftState);
+begin
+  if KeyChar = #13 then
+  begin
+    SearchLog( FComboBox_LogTableName.Selected.Text, FEdit_SearchKeyword.Text );
+  end;
+end;
+
+procedure TUIWrapper_LogSearch.Button_LogSearchClick(Sender: TObject);
+begin
+  SearchLog( FComboBox_LogTableName.Selected.Text, FEdit_SearchKeyword.Text );
+end;
+
+end.

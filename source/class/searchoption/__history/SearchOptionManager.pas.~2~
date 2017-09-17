@@ -1,0 +1,19 @@
+unit SearchOptionManager;
+
+interface
+
+uses
+  SearchOption, DBManager;
+
+type
+  TSearchOptionManager = class(TSearchOption)
+    private
+      FDBMS: TAbsDBManager;
+    protected
+
+    public
+  end;
+
+implementation
+
+end.

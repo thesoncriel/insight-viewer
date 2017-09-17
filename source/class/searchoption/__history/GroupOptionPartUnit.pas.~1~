@@ -1,0 +1,29 @@
+unit GroupOptionPartUnit;
+
+interface
+uses
+  Classes, SearchOption_Intf, FMX.ListBox, FMX.Controls, UIWappedPartUnit;
+
+type
+  TGruopOptionPart = class(TAbsUIWrappedPart)
+    private
+      FCmbTimeUnit: TComboBox;
+      FCmbFunction: TComboBox;
+    public
+      constructor Create(owner: TExpander; cmbTimeUnit, cmbFunction: TComboBox);
+  end;
+
+
+implementation
+
+{ TGruopOptionPart }
+
+constructor TGruopOptionPart.Create(owner: TExpander; cmbTimeUnit,
+  cmbFunction: TComboBox);
+begin
+  Create( owner );
+  FCmbTimeUnit := cmbTimeUnit;
+  FCmbFunction := cmbFunction;
+end;
+
+end.

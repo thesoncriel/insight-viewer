@@ -1,0 +1,123 @@
+unit UIWrapper_StageGridListUnit;
+
+interface
+
+uses
+  FMX.TabControl, SearchResult, DataFileSaver, Data.DB;
+
+const
+  DBMS_NAME: array[0..1] of String = ( 'MS-SQL', 'Fire Bird' );
+
+type
+  TUIWrapper_StageGridList = class(TObject)
+    private
+      FTabCtrl: TTabControl;
+      FSearchResult: IDataSetIterator;
+    protected
+      procedure InitChildTab(arrNames: array of String);
+    public
+      constructor Create(tabCtrl: TTabControl);
+      destructor Destroy; override;
+      procedure SetSearchResult(schResult: IDataSetIterator);
+      function GetSeachResult: IDataSetIterator;
+      function Count: Integer;
+      function GetActiveTabIndex: Integer;
+
+      procedure Clear;
+  end;
+implementation
+
+uses
+  FMX.TreeView, FMX.Types, UIWrapper_StageGridUnit, System.SysUtils;
+
+{ TEvent_TabControl_DBList }
+
+procedure TUIWrapper_StageGridList.Clear;
+begin
+  while FTabCtrl.TabCount > 0 do
+  begin
+    FTabCtrl.Tabs[ 0 ].Free;
+  end;
+  if FSearchResult <> nil then
+  begin
+    FSearchResult._Release;
+    FSearchResult := nil;
+  end;
+end;
+
+function TUIWrapper_StageGridList.Count: Integer;
+begin
+  if FSearchResult <> nil then
+    result := FSearchResult.Count
+  else
+    result := 0;
+end;
+
+constructor TUIWrapper_StageGridList.Create(tabCtrl: TTabControl);
+begin
+  FTabCtrl := tabCtrl;            //tabCtrl.Tab
+  //InitChildTab( DBMS_NAME );
+end;
+
+destructor TUIWrapper_StageGridList.Destroy;
+begin
+  Clear;
+end;
+
+
+function TUIWrapper_StageGridList.GetActiveTabIndex: Integer;
+begin
+  result := FTabCtrl.TabIndex;
+end;
+
+function TUIWrapper_StageGridList.GetSeachResult: IDataSetIterator;
+begin
+  result := FSearchResult;
+end;
+
+procedure TUIWrapper_StageGridList.InitChildTab(arrNames: array of String);
+var
+  i: Integer;
+  tabItem: TTabItem;
+  treeView: TTreeView;
+begin
+  for i := 0 to High( arrNames ) do
+  begin
+    tabItem := TTabItem.Create( FTabCtrl );
+    tabItem.Text := arrNames[ i ];
+    FTabCtrl.AddObject( tabItem );
+
+    treeView := TTreeView.Create( tabItem );
+    tabItem.AddObject( treeView );
+    treeView.Align := TAlignLayout.alClient;
+    treeView.AlternatingRowBackground := true;
+  end;
+end;
+
+procedure TUIWrapper_StageGridList.SetSearchResult(
+  schResult: IDataSetIterator);
+var
+  item: TUIWrapper_StageGrid;
+  i: Integer;
+begin
+  Clear;
+
+  while schResult.MoveNext = true do
+  begin
+    item := TUIWrapper_StageGrid.Create( nil );
+    item.SetTitle( schResult.CurName );
+    item.SetData( schResult.CurData );
+    FTabCtrl.AddObject( item );
+  end;
+
+  schResult.MoveFirst;
+  FSearchResult := schResult;
+
+  for i := 0 to FTabCtrl.TabCount - 1 do
+  begin
+    ( FTabCtrl.Tabs[ i ] as TUIWrapper_StageGrid ).AutoColumnSize;
+  end;
+end;
+
+
+end.

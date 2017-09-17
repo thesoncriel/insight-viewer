@@ -1,0 +1,17 @@
+unit SearchOption;
+
+interface
+
+type
+  ISearchOptionPart = interface(IInterface)
+    function GetQueryPart: String;
+    function IsUse: Boolean;
+  end;
+
+  TSearchOption = class(TObject)
+
+  end;
+
+implementation
+
+end.

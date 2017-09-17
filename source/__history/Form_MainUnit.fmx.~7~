@@ -1,0 +1,186 @@
+object Form_Main: TForm_Main
+  Left = 0
+  Top = 0
+  BiDiMode = bdLeftToRight
+  Caption = 'Form1'
+  ClientHeight = 400
+  ClientWidth = 600
+  Transparency = False
+  Visible = False
+  StyleLookup = 'backgroundstyle'
+  object Button1: TButton
+    Position.Point = '(64,344)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button1Click
+    TabOrder = 0
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button1'
+  end
+  object StringGrid1: TStringGrid
+    BindingName = 'theson'
+    Position.Point = '(120,8)'
+    Width = 201.000000000000000000
+    Height = 100.000000000000000000
+    ClipChildren = True
+    ClipParent = True
+    StyleLookup = 'gridstyle'
+    TabOrder = 1
+    RowHeight = 21.000000000000000000
+    RowCount = 1
+    object TStringColumn
+      Width = 64.000000000000000000
+      Height = 77.000000000000000000
+      HitTest = False
+      TabOrder = 0
+      Header = 'FID'
+    end
+    object TStringColumn
+      Position.Point = '(64,0)'
+      Width = 64.000000000000000000
+      Height = 77.000000000000000000
+      HitTest = False
+      TabOrder = 1
+      Header = 'FNAME'
+    end
+  end
+  object Button2: TButton
+    Position.Point = '(200,352)'
+    Width = 80.000000000000000000
+    Height = 22.000000000000000000
+    OnClick = Button2Click
+    TabOrder = 2
+    StaysPressed = False
+    IsPressed = False
+    Text = 'Button2'
+  end
+  object Grid1: TGrid
+    Position.Point = '(40,224)'
+    Width = 100.000000000000000000
+    Height = 100.000000000000000000
+    TabOrder = 3
+    RowHeight = 21.000000000000000000
+    RowCount = 100
+  end
+  object BindNavigator1: TBindNavigator
+    Position.Point = '(208,256)'
+    Width = 240.000000000000000000
+    Height = 25.000000000000000000
+    BindScope = BindScopeDB1
+    xRadius = 4.000000000000000000
+    yRadius = 4.000000000000000000
+  end
+  object BindingsList1: TBindingsList
+    Methods = <>
+    OutputConverters = <>
+    UseAppManager = False
+    Left = 20
+    Top = 5
+    object DBLinkStringGrid11: TBindDBGridLink
+      Category = 'DB Links'
+      Columns = <>
+    end
+    object BindGridLinkGrid11: TBindGridLink
+      Category = 'Links'
+      ControlComponent = Grid1
+      ColumnExpressions = <>
+      PosControlExpressions = <>
+      PosSourceExpressions = <>
+      FormatControlExpressions = <>
+      ClearControlExpressions = <>
+    end
+    object DBLinkStringGrid12: TBindDBGridLink
+      Category = 'DB Links'
+      DataSource = BindScopeDB1
+      GridControl = StringGrid1
+      Columns = <>
+    end
+  end
+  object SQLConnection1: TSQLConnection
+    ConnectionName = 'HAHAFB'
+    DriverName = 'FIREBIRD'
+    GetDriverFunc = 'getSQLDriverINTERBASE'
+    LibraryName = 'dbxfb.dll'
+    LoginPrompt = False
+    Params.Strings = (
+      'DriverName=Interbase'
+      'Database=localhost/d:\gogo.fdb'
+      'service=tcp'
+      'User_Name=sysdba'
+      'Password=masterkey'
+      'SQLDialect=3'
+      'Interbase TransIsolation=ReadCommited')
+    TableScope = [tsSynonym, tsSysTable, tsTable, tsView]
+    VendorLib = 'fbclient.dll'
+    Connected = True
+    Left = 432
+    Top = 144
+  end
+  object ADOConnection1: TADOConnection
+    ConnectionString = 
+      'Provider=LCPI.IBProvider.3;Data Source=localhost:d:\temp\test.fd' +
+      'b;User Id=SYSDBA;password=masterkey;ctype=win1251;auto_commit=tr' +
+      'ue'
+    LoginPrompt = False
+    Provider = 'LCPI.IBProvider.3'
+    Left = 496
+    Top = 272
+  end
+  object SQLQuery1: TSQLQuery
+    GetMetadata = True
+    Active = True
+    MaxBlobSize = -1
+    ParamCheck = False
+    Params = <>
+    SQL.Strings = (
+      'select * from gogo;')
+    SQLConnection = SQLConnection1
+    Left = 360
+    Top = 144
+  end
+  object BindScopeDB1: TBindScopeDB
+    DataSource = DataSource1
+    Left = 26
+    Top = 130
+  end
+  object DataSource1: TDataSource
+    DataSet = SQLQuery1
+    Left = 160
+    Top = 176
+  end
+  object IBDataSet1: TIBDataSet
+    Left = 288
+    Top = 352
+  end
+  object IBDatabase1: TIBDatabase
+    DatabaseName = 'D:\GOGO.FDB'
+    Params.Strings = (
+      'user_name=sysdba'
+      'password=masterkey'
+      'lc_ctype=UNICODE_FSS')
+    LoginPrompt = False
+    ServerType = 'IBServer'
+    SQLDialect = 1
+    Left = 352
+    Top = 312
+  end
+  object IBTransaction1: TIBTransaction
+    DefaultDatabase = IBDatabase1
+    Left = 408
+    Top = 328
+  end
+  object UniConnection1: TUniConnection
+    ProviderName = 'InterBase'
+    Database = 'd:\gogo.fdb'
+    Username = 'sysdba'
+    Password = 'masterkey'
+    LoginPrompt = False
+    Left = 504
+    Top = 48
+  end
+  object InterBaseUniProvider1: TInterBaseUniProvider
+    Left = 520
+    Top = 152
+  end
+end

@@ -1,0 +1,298 @@
+unit DataFileSaver;
+
+interface
+
+uses
+  DB, Classes;
+
+type
+
+  IDataSetIterator = Interface(IInterface)
+      function HasNext(): Boolean;
+      function MoveNext(): TDataSet;
+      function CurName(): String;
+      procedure First;
+  End;
+
+
+  TAbsFileSaver = class(TObject)
+    public
+      function SaveTo(data: TDataSet; filePath: String): Boolean; overload; virtual; abstract;
+      function SaveTo(dataIter: IDataSetIterator; filePath: String): Boolean; overload; virtual; abstract;
+  end;
+
+
+  TExcelSaver = class(TAbsFileSaver)
+    private
+//      CXlsBof: array[0..5] of Word;
+//      CXlsEof: array[0..1] of Word;
+//      CXlsLabel: array[0..5] of Word;
+//      CXlsNumber: array[0..4] of Word;
+//      CXlsRk: array[0..4] of Word;
+
+      FStream: TStream;
+      FDataSet: TDataSet;
+    protected
+      procedure XlsBeginStream(XlsStream: TStream; const BuildNumber: Word);
+      procedure XlsEndStream(XlsStream: TStream);
+      procedure XlsWriteCellRk(XlsStream: TStream; const ACol, ARow: Word; const AValue: Integer);
+      procedure XlsWriteCellNumber(XlsStream: TStream; const ACol, ARow: Word; const AValue: Double);
+      procedure XlsWriteCellLabel(XlsStream: TStream; const ACol, ARow: Word; const AValue: string);
+
+      function WideStringToString(const ws: WideString; codePage: Word): AnsiString;
+      function IsStringType( fieldType: TFieldType ): Boolean;
+      function IsDoubleType( fieldType: TFieldType ): Boolean;
+      function IsIntgerType( fieldType: TFieldType ): Boolean;
+      function GetFieldType( fieldType: TFieldType ): TFieldType;
+
+      procedure AppendColumnName;
+      procedure AppendStrField(colNum: Integer);
+      procedure AppendDblField(colNum: Integer);
+      procedure AppendIntField(colNum: Integer);
+    public
+      constructor Create();
+      function SaveTo(data: TDataSet; filePath: String): Boolean; overload;
+      function SaveTo(dataIter: IDataSetIterator; filePath: String): Boolean; overload;
+  end;
+
+
+  TCsvSaver = class(TAbsFileSaver)
+    public
+      function SaveTo(data: TDataSet; filePath: String): Boolean; overload;
+      function SaveTo(dataIter: IDataSetIterator; filePath: String): Boolean; overload;
+  end;
+
+
+
+implementation
+
+uses
+  System.SysUtils, Windows;
+var
+  CXlsBof: array[0..5] of Word = ($809, 8, 00, $10, 0, 0);
+  CXlsEof: array[0..1] of Word = ($0A, 00);
+  CXlsLabel: array[0..5] of Word = ($204, 0, 0, 0, 0, 0);
+  CXlsNumber: array[0..4] of Word = ($203, 14, 0, 0, 0);
+  CXlsRk: array[0..4] of Word = ($27E, 10, 0, 0, 0);
+
+{ TExcelSaver }
+
+function TExcelSaver.SaveTo(data: TDataSet; filePath: String): Boolean;
+var
+  bRet: Boolean;
+  i,j: Integer;
+  fieldType: TFieldType;
+begin
+  bRet := true;
+  FDataSet := data;
+  FStream := TFileStream.Create( filePath, fmCreate );
+  try
+    XlsBeginStream( FStream, 0 );
+    AppendColumnName;
+
+    for i := 0 to FDataSet.FieldCount - 1 do
+    begin
+      fieldType := GetFieldType( FDataSet.Fields[ i ].DataType );
+
+      case fieldType of
+        ftFloat:    AppendDblField( i );
+        ftInteger:  AppendIntField( i );
+        ftString:   AppendStrField( i );
+      end;
+    end;
+
+//     for I := 0 to 99 do
+//      for J := 0 to 99 do
+//      begin
+////        XlsWriteCellNumber(FStream, I, J, 34.34);
+//       // XlsWriteCellRk(FStream, I, J, 3434);
+////        XlsWriteCellLabel(FStream, I, J, Format('Cell: %d,%d', [I, J]));
+//      end;
+    XlsEndStream( FStream );
+  except
+    bRet := false;
+  end;
+
+  FStream.Free;
+  result := bRet;
+end;
+
+
+procedure TExcelSaver.AppendColumnName;
+var
+  i: Integer;
+begin
+  for i := 0 to FDataSet.FieldCount - 1 do
+  begin
+    XlsWriteCellLabel( Fstream, i, 0, FDataSet.Fields.FieldByNumber( i ).FieldName );
+  end;
+end;
+
+procedure TExcelSaver.AppendDblField(colNum: Integer);
+var
+  iRow: Integer;
+  field: TField;
+begin
+  iRow := 1;
+  field := FDataSet.Fields.FieldByNumber( colNum );
+
+  while FDataSet.Eof = false do
+  begin
+    XlsWriteCellNumber( FStream, col, iRow, field.Value );
+    FDataSet.Next;
+    Inc( iRow );
+  end;
+end;
+
+procedure TExcelSaver.AppendIntField(colNum: Integer);
+var
+  iRow: Integer;
+  field: TField;
+begin
+  iRow := 1;
+  field := FDataSet.Fields.FieldByNumber( colNum );
+
+  while FDataSet.Eof = false do
+  begin
+    XlsWriteCellRk( FStream, col, iRow, field.Value );
+    FDataSet.Next;
+    Inc( iRow );
+  end;
+end;
+
+procedure TExcelSaver.AppendStrField(colNum: Integer);
+var
+  iRow: Integer;
+  field: TField;
+begin
+  iRow := 1;
+  field := FDataSet.Fields.FieldByNumber( colNum );
+
+  while FDataSet.Eof = false do
+  begin
+    XlsWriteCellLabel( FStream, col, iRow, field.Value );
+    FDataSet.Next;
+    Inc( iRow );
+  end;
+end;
+
+constructor TExcelSaver.Create;
+begin
+  inherited;
+
+end;
+
+function TExcelSaver.GetFieldType(fieldType: TFieldType): TFieldType;
+begin
+  if IsDoubleType( fieldType ) = true then result := ftFloat;
+  if IsIntegerType( fieldType ) = true then result := ftInteger;
+  if IsStringType( fieldType ) = true then result := ftString;
+end;
+
+function TExcelSaver.IsDoubleType(fieldType: TFieldType): Boolean;
+begin
+  result := ( fieldType = ftFloat ) or
+            ( fieldType = ftSingle );
+end;
+
+function TExcelSaver.IsIntgerType(fieldType: TFieldType): Boolean;
+begin
+  result := ( fieldType = ftSmallint ) or
+            ( fieldType = ftInteger ) or
+            ( fieldType = ftWord ) or
+            ( fieldType = ftBytes ) or
+            ( fieldType = ftLargeint );
+end;
+
+function TExcelSaver.IsStringType(fieldType: TFieldType): Boolean;
+begin
+  result := ( fieldType = ftDateTime ) or
+            ( fieldType = ftDate ) or
+            ( fieldType = ftTime ) or
+            ( fieldType = ftString ) or
+            ( fieldType = ftMemo );
+end;
+
+function TExcelSaver.SaveTo(dataIter: IDataSetIterator; filePath: String): Boolean;
+begin
+  result := true;
+end;
+
+procedure TExcelSaver.XlsBeginStream(XlsStream: TStream; const BuildNumber: Word);
+begin
+  CXlsBof[4] := BuildNumber;
+  XlsStream.WriteBuffer(CXlsBof, SizeOf(CXlsBof));
+end;
+
+procedure TExcelSaver.XlsEndStream(XlsStream: TStream);
+begin
+  XlsStream.WriteBuffer(CXlsEof, SizeOf(CXlsEof));
+end;
+
+procedure TExcelSaver.XlsWriteCellRk(XlsStream: TStream; const ACol, ARow: Word; const AValue: Integer);
+var
+  V: Integer;
+begin
+  CXlsRk[2] := ARow;
+  CXlsRk[3] := ACol;
+  XlsStream.WriteBuffer(CXlsRk, SizeOf(CXlsRk));
+  V := (AValue shl 2) or 2;
+  XlsStream.WriteBuffer(V, 4);
+end;
+
+procedure TExcelSaver.XlsWriteCellNumber(XlsStream: TStream; const ACol, ARow: Word; const AValue: Double);
+begin
+  CXlsNumber[2] := ARow;
+  CXlsNumber[3] := ACol;
+  XlsStream.WriteBuffer(CXlsNumber, SizeOf(CXlsNumber));
+  XlsStream.WriteBuffer(AValue, 8);
+end;
+
+procedure TExcelSaver.XlsWriteCellLabel(XlsStream: TStream; const ACol, ARow: Word; const AValue: string);
+var
+  L: Word;
+begin
+  L := Length(AValue);
+  CXlsLabel[1] := 8 + L;
+  CXlsLabel[2] := ARow;
+  CXlsLabel[3] := ACol;
+  CXlsLabel[5] := L;
+  XlsStream.WriteBuffer(CXlsLabel, SizeOf(CXlsLabel));
+  XlsStream.WriteBuffer(Pointer( WideStringToString(AValue, CP_ACP) )^, L);
+end;
+
+
+function TExcelSaver.WideStringToString(const ws: WideString; codePage: Word): AnsiString;
+var
+  l: integer;
+begin
+  if ws = '' then
+    Result := ''
+  else
+  begin
+    l := WideCharToMultiByte(codePage,
+      WC_COMPOSITECHECK or WC_DISCARDNS or WC_SEPCHARS or WC_DEFAULTCHAR,
+      @ws[1], - 1, nil, 0, nil, nil);
+    SetLength(Result, l - 1);
+    if l > 1 then
+      WideCharToMultiByte(codePage,
+        WC_COMPOSITECHECK or WC_DISCARDNS or WC_SEPCHARS or WC_DEFAULTCHAR,
+        @ws[1], - 1, @Result[1], l - 1, nil, nil);
+  end;
+end; { WideStringToString }
+
+
+
+{ TCsvSaver }
+
+function TCsvSaver.SaveTo(data: TDataSet; filePath: String): Boolean;
+begin
+  result := true;
+end;
+
+function TCsvSaver.SaveTo(dataIter: IDataSetIterator; filePath: String): Boolean;
+begin
+  result := true;
+end;
+
+end.

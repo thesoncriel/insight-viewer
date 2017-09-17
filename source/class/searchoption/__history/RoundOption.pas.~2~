@@ -1,0 +1,38 @@
+unit RoundOption;
+
+interface
+
+uses
+  SearchOptionPart, SearchOption, SysUtils;
+
+type
+  TRoundOption = class(TAbsSearchOptionPart)
+    public
+      constructor Create(searchOpt: TSearchOption); override;
+      function GetQueryPart: String;
+      function IsUse: Boolean;
+  end;
+
+implementation
+
+{ TRoundOption }
+
+
+
+constructor TRoundOption.Create(searchOpt: TSearchOption);
+begin
+  inherited;
+  FHashMap.PutValue( 'decplace', '7' );
+end;
+
+function TRoundOption.GetQueryPart: String;
+begin
+
+end;
+
+function TRoundOption.IsUse: Boolean;
+begin
+
+end;
+
+end.

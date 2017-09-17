@@ -1,0 +1,34 @@
+﻿unit Event_TabControl_DBListUnit;
+
+interface
+
+uses
+  FMX.TabControl;
+
+const
+  DBMS_NAME: array[0..1] of String = ( 'MS-SQL', 'Fire Bird' );
+
+type
+  TEvent_TabControl_DBList = class(TObject)
+    private
+      FTabCtrl: TTabControl;
+    protected
+      procedure CreateChildTab(arrNames: array of String);
+    public
+      constructor Create(tabCtrl: TTabControl);
+  end;
+implementation
+
+{ TEvent_TabControl_DBList }
+
+constructor TEvent_TabControl_DBList.Create(tabCtrl: TTabControl);
+begin
+  FTabCtrl := tabCtrl;
+end;
+
+procedure TEvent_TabControl_DBList.CreateChildTab(arrNames: array of String);
+begin
+
+end;
+
+end.

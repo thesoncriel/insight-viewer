@@ -1,0 +1,126 @@
+﻿unit UIWrapper_ColumnUnit;
+
+interface
+
+uses
+  UIWrapper_SchOptPartUnit, FMX.ListBox, FMX.Controls, FMX.Types,
+  SearchOption_Intf, Classes, ColumnListOptionPart;
+
+type
+  TUIWrapper_SchOpt_Column = class(TUIWrapper_AbsSearchOptionPart)
+    private
+      FListBox: TListBox;
+      FBtnAllSelect: TButton;
+      FBtnClear: TButton;
+      FColumnsOption: TColumnsOptionPart;
+    protected
+      procedure BtnAllSelect_OnClick(Sender: TObject);
+      procedure BtnClear_OnClick(Sender: TObject);
+      procedure SetCheckAllItems(val: Boolean);
+      function StringComp(str1, str2: String): Boolean;
+      procedure ClearOption;
+    public
+      constructor Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+      destructor Destroy; override;
+      procedure SetColumnList(colList: TStringList);
+      function GetSearchOptionPart: ISearchOptionPart;
+      procedure SetData(sList: TStringList); override;
+  end;
+
+implementation
+
+uses
+  SysUtils;
+
+{ TUIWrapper_ColumnListPart }
+
+procedure TUIWrapper_SchOpt_Column.BtnAllSelect_OnClick(Sender: TObject);
+begin
+  SetCheckAllItems( true );
+end;
+
+procedure TUIWrapper_SchOpt_Column.BtnClear_OnClick(Sender: TObject);
+begin
+  SetCheckAllItems( false );
+end;
+
+procedure TUIWrapper_SchOpt_Column.ClearOption;
+begin
+  if FColumnsOption <> nil then
+    FColumnsOption.Free;
+end;
+
+constructor TUIWrapper_SchOpt_Column.Create(owner: TExpander; listBox: TListBox; btnAllSel, btnClear: TButton );
+begin
+  Init( owner );
+  FListBox :=  listBox;
+  FBtnAllSelect := btnAllSel;
+  FBtnClear := btnClear;
+
+  FBtnAllSelect.OnClick := BtnAllSelect_OnClick;
+  FBtnClear.OnClick := BtnClear_OnClick;
+
+  //FListBox.Items.Clear;
+end;
+
+destructor TUIWrapper_SchOpt_Column.Destroy;
+begin
+  FExpander.DestroyComponents;
+  inherited;
+end;
+
+function TUIWrapper_SchOpt_Column.GetSearchOptionPart: ISearchOptionPart;
+var
+  optPart: TColumnsOptionPart;
+  sList: TStringList;
+  i: Integer;
+begin
+  optPart := FColumnsOption;
+  sList := TStringList.Create;
+
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    if FListBox.ItemByIndex( i ).IsChecked = true then
+      sList.Add( FListBox.ItemByIndex( i ).Text );
+  end;
+
+  optPart.SetUse( IsUse );
+  optPart.SetColumnList( sList );
+
+  result := optPart;
+end;
+
+procedure TUIWrapper_SchOpt_Column.SetCheckAllItems(val: Boolean);
+var
+  btn: TButton;
+  i: Integer;
+begin
+  for i := 0 to FListBox.Count - 1 do
+  begin
+    FListBox.ItemByIndex( i ).IsChecked := val;
+  end;
+end;
+
+procedure TUIWrapper_SchOpt_Column.SetColumnList(colList: TStringList);
+begin
+  ClearOption;
+  FColumnsOption := TColumnsOptionPart.Create;
+  FColumnsOption.SetColumnList( colList );
+  FListBox.Items := FColumnsOption.Get
+  SetCheckAllItems( true );
+end;
+
+procedure TUIWrapper_SchOpt_Column.SetData(sList: TStringList);
+begin
+  inherited;
+  SetColumnList( sList );
+end;
+
+
+
+function TUIWrapper_SchOpt_Column.StringComp(str1, str2: String): Boolean;
+begin
+
+end;
+
+end.

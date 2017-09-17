@@ -1,0 +1,238 @@
+unit Frame_SchOpt_StageInfo;
+
+interface
+
+uses
+  FMX.Layouts, FMX.Controls, FMX.Types, Classes, FMX.Objects,
+  SearchOption_Intf, StageOptionPart, FMX.Edit, System.Types;
+
+const
+  FRAME_STAGEINFO_WIDTH = 200;
+  FRAME_STAGEINFO_HEIGHT = 100;
+  FRAME_STAGEINFO_PADDING = 10;
+
+type
+  TFrame_SchOpt_StageInfo = class(TPanel)
+    private
+      FEdit_StageName: TComboEdit;
+      FLabel_Start: TLabel;
+      FLabel_End: TLabel;
+      FEdit_Start: TClearingEdit;
+      FEdit_End: TClearingEdit;
+      FText_Remove: TText;
+
+      FLogData_Start: ILogData;
+      FLogData_End: ILogData;
+
+      FOnRemove: TNotifyEvent;
+
+      FOnInsertLogData: TNotifyEvent;
+    protected
+      procedure InitComponent;
+      procedure OnRemove_Proc(Sender: TObject);
+      procedure OnChangeLogData_Proc(Sender: TObject);
+      procedure OnInsertLogData_Proc(Sender: TObject);
+      procedure OnDragOver_Proc(Sender: TObject; const Data: TDragObject; const Point: TPointF; var Accept: Boolean);
+      procedure OnDragDrop_Proc(Sender: TObject; const Data: TDragObject; const Point: TPointF);
+      function StrArrToStrList(strArr: array of String): TStringList;
+    public
+      constructor Create(owner: TComponent); override;
+      procedure SetStart(logData: ILogData);
+      procedure SetEnd(logData: ILogData);
+      function IsUse: Boolean;
+      function GetStageOption: TStageOptionPart;
+    published
+      property OnRemove: TNotifyEvent read FOnRemove write FOnRemove;
+      property OnInsertLogData: TNotifyEvent read FOnInsertLogData write FOnInsertLogData;
+  end;
+
+implementation
+
+uses
+  System.UITypes, FMX.Grid, FMX.ListBox, Const_SearchOptionUnit,
+  System.SysUtils;
+
+{ TFrame_SchOpt_StageInfo }
+
+constructor TFrame_SchOpt_StageInfo.Create(owner: TComponent);
+begin
+  Inherited;
+  self.Parent := TFmxObject( owner );
+  self.Width := FRAME_STAGEINFO_WIDTH;
+  self.Height := FRAME_STAGEINFO_HEIGHT;
+  self.Align := TAlignLayout.alNone;
+  self.Padding.Top := FRAME_STAGEINFO_PADDING;
+  self.Padding.Left := FRAME_STAGEINFO_PADDING;
+  self.Padding.Right := FRAME_STAGEINFO_PADDING;
+  self.StyleLookup := 'style_stage_info';
+
+  InitComponent;
+end;
+
+function TFrame_SchOpt_StageInfo.GetStageOption: TStageOptionPart;
+var
+  logData_Start: ILogData;
+  logData_End  : ILogData;
+  stageOpt     : TStageOptionPart;
+begin
+  if ( FEdit_Start.Text = '' ) or ( FEdit_End.Text = '' ) then
+  begin
+    raise Exception.Create( result.StageName + ' Stage''s Start or End Time is Invailid !' );
+    //result := nil;
+  end;
+
+
+  logData_Start := TJournalData.Create( FEdit_Start.Text );
+  logData_End   := TJournalData.Create( FEdit_End.Text );
+  stageOpt      := TStageOptionPart.Create;
+
+  stageOpt.SetUse( IsUse );
+  stageOpt.StartLog := logData_Start;
+  stageOpt.EndLog   := logData_End;
+  stageOpt.StageName:= FEdit_StageName.Text;
+
+  result := stageOpt;
+end;
+
+procedure TFrame_SchOpt_StageInfo.InitComponent;
+begin
+  FEdit_StageName := TComboEdit.Create( self );
+  FLabel_Start := TLabel.Create( self );
+  FLabel_End := TLabel.Create( self );
+  FEdit_Start := TClearingEdit.Create( self );
+  FEdit_End := TClearingEdit.Create( self );
+  FText_Remove := TText.Create( self );
+
+  FEdit_StageName.Parent := self;
+  FLabel_Start.Parent := self;
+  FLabel_End.Parent := self;
+  FEdit_Start.Parent := self;
+  FEdit_End.Parent := self;
+  FText_Remove.Parent := self;
+
+  FEdit_StageName.Width := 150;
+  FEdit_StageName.Position.X := 13;
+  FEdit_StageName.Position.Y := 11;
+  FEdit_StageName.Items.AddStrings( StrArrToStrList( STAGE_NAME_LIST ) );
+
+  FLabel_Start.Width := 32;
+  FLabel_Start.Position.X := 17;
+  FLabel_Start.Position.Y := 47;
+  FLabel_Start.Text := 'Start';
+
+  FLabel_End.Width := 32;
+  FLabel_End.Position.X := 17;
+  FLabel_End.Position.Y := 71;
+  FLabel_End.Text := 'End';
+
+  FEdit_Start.Width := 145;
+  FEdit_Start.Position.X := 48;
+  FEdit_Start.Position.Y := 43;
+  FEdit_Start.OnChange := OnChangeLogData_Proc;
+  FEdit_Start.OnDragOver := OnDragOver_Proc;
+  FEdit_Start.OnDragDrop := OnDragDrop_Proc;
+  FEdit_Start.CanFocus := false;
+
+  FEdit_End.Width := 145;
+  FEdit_End.Position.X := 48;
+  FEdit_End.Position.Y := 67;
+  FEdit_End.OnChange := OnChangeLogData_Proc;
+  FEdit_End.OnDragOver := OnDragOver_Proc;
+  FEdit_End.OnDragDrop := OnDragDrop_Proc;
+  FEdit_End.CanFocus := false;
+
+  FText_Remove.Width := 25;
+  FText_Remove.Position.X := 175;
+  FText_Remove.Height := 25;
+  FText_Remove.Text := 'x';
+  FText_Remove.Font.Size := 20;
+  FText_Remove.Font.Style := [TFontStyle.fsBold];
+  FText_Remove.OnClick := OnRemove_Proc;
+end;
+
+function TFrame_SchOpt_StageInfo.IsUse: Boolean;
+begin
+  result := self.Opacity = 1;
+end;
+
+
+procedure TFrame_SchOpt_StageInfo.OnChangeLogData_Proc(Sender: TObject);
+var
+  edit: TClearingEdit;
+begin
+  edit := TClearingEdit( Sender );
+
+  if edit.Text = '' then
+  begin
+    if FEdit_Start.Equals( Sender ) = true then
+      FLogData_Start := Nil
+    else if FEdit_End.Equals( Sender ) = true then
+      FLogData_End := Nil;
+  end
+  else OnInsertLogData_Proc( self );
+end;
+
+
+procedure TFrame_SchOpt_StageInfo.OnDragDrop_Proc(Sender: TObject;
+  const Data: TDragObject; const Point: TPointF);
+var
+  edit: TClearingEdit;
+  listItem: TListBoxItem;
+begin
+  edit := TClearingEdit( Sender );
+  listItem := Data.Source as TListBoxItem;
+  edit.Text := listItem.Text;
+  self.Opacity := 1;
+
+  OnChangeLogData_Proc( Sender );
+end;
+
+procedure TFrame_SchOpt_StageInfo.OnDragOver_Proc(Sender: TObject;
+  const Data: TDragObject; const Point: TPointF; var Accept: Boolean);
+begin
+  Accept := Data.Source is TListBoxItem;
+end;
+
+procedure TFrame_SchOpt_StageInfo.OnInsertLogData_Proc(Sender: TObject);
+begin
+  if Assigned( OnInsertLogData ) then OnInsertLogData( Sender );
+end;
+
+procedure TFrame_SchOpt_StageInfo.OnRemove_Proc(Sender: TObject);
+begin
+  if IsUse = false then exit;
+
+  self.Destroy;
+  if Assigned( OnRemove ) then OnRemove( Sender );
+end;
+
+procedure TFrame_SchOpt_StageInfo.SetEnd(logData: ILogData);
+begin
+  FLogData_End := logData;
+  FEdit_End.Text := logData.GetDate;
+end;
+
+procedure TFrame_SchOpt_StageInfo.SetStart(logData: ILogData);
+begin
+  FLogData_Start := logData;
+  FEdit_Start.Text := logData.GetDate;
+end;
+
+function TFrame_SchOpt_StageInfo.StrArrToStrList(
+  strArr: array of String): TStringList;
+var
+  i: Integer;
+  sItem: String;
+  sList: TStringList;
+begin
+  sList := TStringList.Create;
+
+  for sItem in strArr do
+  begin
+    sList.Add( sItem );
+  end;
+
+  result := sList;
+end;
+
+end.
