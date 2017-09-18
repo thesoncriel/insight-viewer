@@ -8,7 +8,7 @@
 * Fire Monkey Library
 * MS-SQL Server
 * Firebird 2.1
-* 그래픽 출력 가능
+* 그래프 출력 가능
 
 ## 특이사항
 사정상 config/query.xml 은 제외함.
